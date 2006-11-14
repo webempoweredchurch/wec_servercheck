@@ -1,5 +1,32 @@
 <?php
 
+/***************************************************************
+* Copyright notice
+*
+* (c) 2006 Foundation for Evangelism (info@evangelize.org)
+* All rights reserved
+*
+* This file is part of the Web-Empowered Church (WEC) ministry of the
+* Foundation for Evangelism (http://evangelize.org). The WEC is developing 
+* TYPO3-based free software for churches around the world. Our desire 
+* use the Internet to help offer new life through Jesus Christ. Please
+* see http://WebEmpoweredChurch.org/Jesus.
+*
+* You can redistribute this file and/or modify it under the terms of the 
+* GNU General Public License as published by the Free Software Foundation; 
+* either version 2 of the License, or (at your option) any later version.
+*
+* The GNU General Public License can be found at
+* http://www.gnu.org/copyleft/gpl.html.
+*
+* This file is distributed in the hope that it will be useful for ministry,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* This copyright notice MUST APPEAR in all copies of the file!
+***************************************************************/
+
 
 	//-----------------------------------
 	//|			Controllers				|
@@ -9,8 +36,8 @@
 	/**
 	 * ModuleController, simple keeps a list of all the test modules.
 	 *
-	 * @package default
-	 * @author Christoph Koehler
+	 * 
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class ModuleController {
 	
@@ -61,8 +88,8 @@
 	/**
 	 * Renders the output of the test results. Can be replace to change output format.
 	 *
-	 * @package default
-	 * @author Christoph Koehler
+	 * 
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class RenderOutput {
 	
@@ -105,8 +132,8 @@
 	/**
 	 * Abstract class Module, blueprint for test modules.
 	 *
-	 * @package default
-	 * @author Christoph Koehler
+	 * 
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Module {
 
@@ -186,8 +213,8 @@
 	/**
 	 * Sample Test
 	 *
-	 * @package default
-	 * @author Christoph Koehler
+	 * 
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Test extends Module {
 	
