@@ -140,11 +140,11 @@
 		 **/
 		function getStatus($status) {
 			if($status == 1) {
-				return 'Passed!';
+				return '<span style="color: green;">Passed!</span>';
 			} else if ($status == 0) {
-				return 'Warning!';
+				return '<span style="color: orange;">Warning!';
 			} else if ($status == -1) {
-				return 'Failed!';
+				return '<span style="color: red;">Failed!';
 			}
 		}
 	} 
