@@ -34,7 +34,7 @@
 		
 	
 	/**
-	 * ModuleController, simple keeps a list of all the test modules.
+	 * ModuleController, simply keeps a list of all the test modules.
 	 *
 	 * 
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
@@ -61,6 +61,7 @@
 		/**
 		 * Registers all the test modules inside the controller for easy access.
 		 *
+		 * @param $module The name of the Module we want to register. Same as the class name.
 		 * @return void
 		 **/
 	 	function register($module) {
@@ -86,7 +87,7 @@
 	//-----------------------------------
 	
 	/**
-	 * Renders the output of the test results. Can be replace to change output format.
+	 * Renders the output of the test results. Can be replaced to change output format.
 	 *
 	 * 
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
@@ -105,19 +106,46 @@
 		
 		/**
 		 * Renders the module results.
-		 *
-		 * @return void
+		 * 
+		 * @param $module The module that we want to display.
+		 * @return String
 		 **/
 		function render($module) {
 			$output = $module->getOutput();
 			$title = $module->getTitle();
 			
-			$show = sprintf($this->TITLE, $title);k
+			$show = '<style type="text/css">
+				.tablefield {
+					width: 150px;
+					font-weight: bold;
+				}
+			</style>';
+			$show .= '<table>';
+			$show .= sprintf($this->TITLE, $title);
+			$show .= '<tr><td class="tablefield">Name</td><td class="tablefield">Value</td><td class="tablefield">Status</td></tr>';
 			foreach($output as $key => $value) {
-				$show .= sprintf($this->ROW, $key, $value['value'], $value['status']);
+				$status = $this->getStatus($value['status']);
+				$show .= sprintf($this->ROW, $key, $value['value'], $status);
 			}
+			$show .= '</table>';
 			
 			return $show;
+		}
+		
+		/**
+		 * Translate the status integer codes into a String or even image to display.
+		 *
+		 * @param $status Integer value of the status.
+		 * @return String
+		 **/
+		function getStatus($status) {
+			if($status == 1) {
+				return 'Passed!';
+			} else if ($status == 0) {
+				return 'Warning!';
+			} else if ($status == -1) {
+				return 'Failed!';
+			}
 		}
 	} 
 	
@@ -152,7 +180,6 @@
 		/**
 		 * PHP5 constructor for this class.
 		 *
-		 * @return void
 		 **/
 		function __construct() {
 			$this->output = array();
@@ -162,7 +189,7 @@
 		/**
 		 * Does the actual checking and saves the ouput in the global variable.
 		 *
-		 * @return String
+		 * @return void
 		 **/
 		function check() {
 			die("Please override this function in your class.");
@@ -171,7 +198,7 @@
 		/**
 		 * Gets the title of the test.
 		 *
-		 * @return void
+		 * @return String
 		 **/
 		function getTitle() {
 			return $this->title;
@@ -187,25 +214,36 @@
 		}
 
 		/**
-		 * Displays the output for this test.
+		 * Adds a status to the individual test. 1 means pass, 0 means warning, -1 means fail.
 		 * 
+		 * @param $name Name of the sub test. For example 'Version'.
+		 * @param $status Status integer for this sub test. 1 means pass, 0 means warning, -1 means fail.
 		 * @return void
 		 **/
-		function display() {
-			$content = '<th>' . $this->title . '</th>';
-			foreach($this->output as $row) {
-				$content .= $row . "\n";
-			}
-			return $content;
+		function addStatus($name, $status) {
+			$this->output[$name]['status'] = $status;
 		}
-
+		
 		/**
-		 * Adds another row to the output table
+		 * Adds a recommendation to the individual test
 		 *
+		 * @param $name Name of the sub test, e.g. 'Version'.
+		 * @param $recom Recommendation in case this test fails or a warning appears.
 		 * @return void
 		 **/
-		function add($name, $value, $recommendation = 'N/A') {
-			$this->output[$name] = array('value' => $value, 'status' => $recommendation);
+		function addRecommendation($name, $recom) {
+			$this->output[$name]['recommendation'] = $recom;
+		}
+		
+		/**
+		 * Adds a value to a test. This is pretty much the resulting value of the test.
+		 *
+		 * @param $name Name of the sub test, e.g. 'Version'.
+		 * @param $value Value of the test, e.g. the version number.
+		 * @return void
+		 **/
+		function addValue($name, $value) {
+			$this->output[$name]['value'] = $value;
 		}
 	}
 	
@@ -231,11 +269,13 @@
 			foreach($items as $item) {
 				if(strpos($item, '/') !== false) {
 					$sItem = explode('/', $item);
-					$this->add($sItem[0], $sItem[1], "N/A");
+					$this->addValue($sItem[0], $sItem[1]);
+					$this->addStatus($sItem[0], 1);
 				} else {
 					$item = str_replace('(', '', $item);
 					$item = str_replace(')', '', $item);
-					$this->add('OS', $item);
+					$this->addValue('OS', $item);
+					$this->addStatus('OS', 1);
 				}
 			}
 		}
@@ -243,16 +283,36 @@
 	// register the above class with our controller
 	$mc->register('Test');
 	
+	/**
+	 * Does some basic PHP checks.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class PHP extends Module {
+		
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = "PHP Info";
+		}
+		
+		
+		function check() {
+			
+			$version = phpversion();
+			$this->addValue('Version', $version);
+			$this->addStatus('Version', 1);
+		}
+	}
+	$mc->register('PHP');
 	
 	//-----------------------------------
 	//|			Nitty Gritty			|
 	//-----------------------------------
 	
 	
-	echo '<table>';	
 	foreach($mc->getModules() as $module) {
 		$test = new $module;
 		echo $renderer->render($test);
 	}
-	echo '</table>';
 ?>
