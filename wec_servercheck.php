@@ -50,6 +50,7 @@
 	class ModuleController {
 	
 		var $modules;
+		var $results;
 	
 		/**
 		 * PHP4 constructor.
@@ -64,6 +65,7 @@
 		 **/
 		function __construct() {
 			$this->modules = array();
+			$this->results = array();
 		}
 			
 		/**
@@ -83,6 +85,66 @@
 		 **/
 		function getModules() {
 			return $this->modules;
+		}
+		
+		/**
+		 * Runs the given module if it hasn't run before and saves the results in an array.
+		 *
+		 * @return void
+		 **/
+		function run($module) {
+
+			$moduleName = strtolower($module);
+			if(!array_key_exists($this->results[$moduleName])) {
+				$cur = new $module;
+				$cur->check();
+				$this->results[$moduleName]['tests'] = $cur->getOutput();
+				$this->results[$moduleName]['title'] = $cur->getTitle();
+			}
+			
+			// print_r($this->results);
+		}
+		
+		/**
+		 * Runs all modules and keeps track of dependencies.
+		 *
+		 * @return void
+		 **/
+		function runAll() {
+			foreach($this->modules as $module) {
+				$this->run($module);
+			}
+			
+		}
+		
+		/**
+		 * Returns the test result for a particular test
+		 * 
+		 * @param $test The name of the main module
+		 * @param $subtest The name of the subtest, like 'Version' etc.
+		 * @return String
+		 **/
+		function getTestResult($test, $subtest) {
+		
+			// get name of the test in lower case to compare with array key
+			$testName = strtolower($test);
+			
+			// if the array key already exists, the test has already run, so just return the result.
+			// if not, run the test first.
+			if(!array_key_exists($results[$testName][$subtest])) {
+				$this->run($test);
+			}
+			
+			return $results[$test]['tests'][$subtest]['value'];
+		}
+		
+		/**
+		 * Returns all the results, ususally for use in a rendering object to display them.
+		 *
+		 * @return Array
+		 **/
+		function getResults() {
+			return $this->results;
 		}
 	}
 	
@@ -112,26 +174,46 @@
 		 **/
 		var $TITLE = "<th>%s</th>";
 		
+		
 		/**
-		 * Renders the module results.
-		 * 
-		 * @param $module The module that we want to display.
+		 * Renders all the modules from given results array
+		 *
+		 * @param $results Array that contains all the data for our tests.
 		 * @return String
 		 **/
-		function render($module) {
-			$output = $module->getOutput();
-			$title = $module->getTitle();
+		function renderAll($results) {
+			$output = '<html><head><title>WEC Server Checker</title></head><body>
 			
-			$show = '<style type="text/css">
+			<style type="text/css">
 				.tablefield {
 					width: 150px;
 					font-weight: bold;
 				}
 			</style>';
-			$show .= '<table>';
+
+			
+			foreach($results as $module) {
+				$output .= $this->render($module['tests'], $module['title']);
+			}
+			
+			$output .= '</body></head>';
+			
+			return $output;
+		}
+		
+		/**
+		 * Renders the module results.
+		 * 
+		 * @param $testData Testdata array.
+		 * @param $title The title for this module.
+		 * @return String
+		 **/
+		function render($testData, $title) {
+
+			$show = '<table>';
 			$show .= sprintf($this->TITLE, $title);
 			$show .= '<tr><td class="tablefield">Name</td><td class="tablefield">Value</td><td class="tablefield">Status</td></tr>';
-			foreach($output as $key => $value) {
+			foreach($testData as $key => $value) {
 				$status = $this->getStatus($value['status']);
 				isset($value['recommendation']) ? $recom = $value['recommendation'] : $recom = null;
 				$show .= sprintf($this->ROW, $key, $value['value'], $status . "<br />" . $recom);
@@ -309,8 +391,9 @@
 		 **/
 		function checkServerAPI() {
 			
-			// get Server API and add it as value
+			// get Server API and make it global
 			$api = php_sapi_name();
+			$GLOBALS['API'] = $api;
 			$this->addValue('Server API', $api);
 					
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
@@ -329,8 +412,9 @@
 		 **/
 		function checkOS() {
 			
-			// get OS the server is running.
+			// get OS the server is running and make it global.
 			$os = php_uname('s');
+			$GLOBALS['OS'] = $os;
 			$this->addValue('OS', $os);
 			
 			// these three OS are known, display warning if an unknown one is shown.
@@ -436,8 +520,11 @@
 	//-----------------------------------
 	
 	error_reporting(0);
-	foreach($mc->getModules() as $module) {
-		$test = new $module;
-		echo $renderer->render($test);
-	}
+	
+	$mc->runAll();
+	echo $renderer->renderAll($mc->getResults());
+	// foreach($mc->getModules() as $module) {
+// 		$test = new $module;
+// 		echo $renderer->render($test);
+//	}
 ?>
