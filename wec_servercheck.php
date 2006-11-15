@@ -275,6 +275,7 @@
 			$this->checkVersion();
 			$this->checkServerAPI();
 			$this->checkOS();
+			$this->checkMemoryLimit();
 		}
 		
 		/**
@@ -340,51 +341,72 @@
 				$this->addRecommendation('OS', 'Unknown Operating System');	
 			}
 		}
+		
+		/**
+		 * Checks the memory limit.
+		 *
+		 * @return void
+		 **/
+		function checkMemoryLimit() {
+			
+			// get memory limit
+			$mlimit = ini_get('memory_limit');
+			// print_r(ini_get_all());
+			$this->addValue('Memory Limit', $mlimit);
+			
+		}
 	}
 	$mc->register('PHP');
 	
 	
 	/**
-	 * Does some basic PHP checks.
+	 * Does some basic MySQL checks.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class MySQL extends Module {
 		
+		var $running;
+		
 		function __construct() {
 			parent::__construct();
 			
 			$this->title = "MySQL Info";
+			$this->running = false;
 		}
 		
 		
 		function check() {
-			$this->checkVersion();
-			$this->checkMySQL();
+			$this->checkStatus();
+			
+			if($this->running) {
+				$this->checkVersion();
+			}
 		}
 		
 		/**
-		 * Evaluates the PHP version.
+		 * Evaluates the MySQL version.
 		 *
 		 * @return void
 		 **/
 		function checkVersion() {
 			
-			// get PHP version and add it as value
-			$version = phpversion();
+			// Establish MySQL connection and get server info if successful.
+			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
+			$version = mysql_get_server_info($con);
 			$this->addValue('Version', $version);
-						
-			// get major PHP version
+
+			// get major MySQL version
 			$version = explode('.', $version);
 			$majorVersion = $version[0];
 
-			// if it's PHP 4 or 5, we should be good, otherwise display error.
+			// if it's MySQL 4 or 5, we should be good, otherwise display error.
 			if($majorVersion == 4 || $majorVersion == 5) {
 				$this->addStatus('Version', 1);
 			} else {
 				$this->addStatus('Version', -1);				
-				$this->addRecommendation('Version', "PHP Version is too low!");
-			}
+				$this->addRecommendation('Version', "MySQL Version is not compatible!");
+			}				
 		}
 		
 		/**
@@ -392,16 +414,19 @@
 		 *
 		 * @return void
 		 **/
-		function checkMySQL() {
-			$ext = get_loaded_extensions();
-			if(!in_array('mysql', $ext)) {
-				
-			}
+		function checkStatus() {
 			
-			$a = mysql_get_client_info();
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
-			$a .= mysql_get_server_info($con);
-			echo $a;
+			if($con != false) {
+				$this->addValue('Status', 'Running');
+				$this->addStatus('Status', 1);	
+				$this->running = true;			
+			} else {
+				$this->addValue('Status', 'Problem');
+				$this->addStatus('Status', -1);
+				$this->addRecommendation('Status', mysql_error());	
+			}
+
 		}
 	}
 	$mc->register('MySQL');
@@ -410,7 +435,7 @@
 	//|			Nitty Gritty			|
 	//-----------------------------------
 	
-	
+	error_reporting(0);
 	foreach($mc->getModules() as $module) {
 		$test = new $module;
 		echo $renderer->render($test);
