@@ -125,7 +125,8 @@
 			$show .= '<tr><td class="tablefield">Name</td><td class="tablefield">Value</td><td class="tablefield">Status</td></tr>';
 			foreach($output as $key => $value) {
 				$status = $this->getStatus($value['status']);
-				$show .= sprintf($this->ROW, $key, $value['value'], $status);
+				isset($value['recommendation']) ? $recom = $value['recommendation'] : $recom = null;
+				$show .= sprintf($this->ROW, $key, $value['value'], $status . "<br />" . $recom);
 			}
 			$show .= '</table>';
 			
@@ -249,62 +250,90 @@
 	
 	
 	/**
-	 * Sample Test
-	 *
-	 * 
-	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
-	 **/
-	class Test extends Module {
-	
-		function __construct() {
-			parent::__construct();
-			
-			$this->title = "Version Info";
-		}
-		
-		function check() {
-			
-			$serverInfo = $_SERVER['SERVER_SOFTWARE'];
-			$items = explode(' ', $serverInfo);
-			foreach($items as $item) {
-				if(strpos($item, '/') !== false) {
-					$sItem = explode('/', $item);
-					$this->addValue($sItem[0], $sItem[1]);
-					$this->addStatus($sItem[0], 1);
-				} else {
-					$item = str_replace('(', '', $item);
-					$item = str_replace(')', '', $item);
-					$this->addValue('OS', $item);
-					$this->addStatus('OS', 1);
-				}
-			}
-		}
-	}
-	// register the above class with our controller
-	$mc->register('Test');
-	
-	/**
 	 * Does some basic PHP checks.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	class PHP extends Module {
+	class General extends Module {
 		
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = "PHP Info";
+			$this->title = "General Info";
 		}
 		
 		
 		function check() {
+			$this->checkVersion();
+			$this->checkServerAPI();
+			$this->checkOS();
+		}
+		
+		/**
+		 * Evaluates the PHP version.
+		 *
+		 * @return void
+		 **/
+		function checkVersion() {
 			
+			// get PHP version and add it as value
 			$version = phpversion();
 			$this->addValue('Version', $version);
-			$this->addStatus('Version', 1);
+						
+			// get major PHP version
+			$version = explode('.', $version);
+			$majorVersion = $version[0];
+
+			// if it's PHP 4 or 5, we should be good, otherwise display error.
+			if($majorVersion == 4 || $majorVersion == 5) {
+				$this->addStatus('Version', 1);
+			} else {
+				$this->addStatus('Version', -1);				
+				$this->addRecommendation('Version', "PHP Version is too low!");
+			}
+		}
+		
+		/**
+		 * Checks whether PHP runs in Apache or CGI
+		 *
+		 * @return void
+		 **/
+		function checkServerAPI() {
+			
+			// get Server API and add it as value
+			$api = php_sapi_name();
+			$this->addValue('Server API', $api);
+					
+			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
+			if($api == 'cgi' || $api == 'apache') {
+				$this->addStatus('Server API', 1);
+			} else {
+				$this->addStatus('Server API', 0);
+				$this->addRecommendation('Server API', 'Unknown Server API');
+			}
+		}
+		
+		/**
+		 * Checks the OS the server is running.
+		 *
+		 * @return void
+		 **/
+		function checkOS() {
+			
+			// get OS the server is running.
+			$os = php_uname('s');
+			$this->addValue('OS', $os);
+			
+			// these three OS are known, display warning if an unknown one is shown.
+			if($os == 'Linux' || $os == 'Darwin' || $os == 'Win') {
+				$this->addStatus('OS', 1);
+			} else {
+				$this->addStatus('OS', 0);
+				$this->addRecommendation('OS', 'Unknown Operating System');	
+			}
 		}
 	}
-	$mc->register('PHP');
+	$mc->register('General');
 	
 	//-----------------------------------
 	//|			Nitty Gritty			|
