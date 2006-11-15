@@ -267,6 +267,7 @@
 			$this->checkVersion();
 			$this->checkServerAPI();
 			$this->checkOS();
+			$this->checkMySQL();
 		}
 		
 		/**
@@ -325,12 +326,30 @@
 			$this->addValue('OS', $os);
 			
 			// these three OS are known, display warning if an unknown one is shown.
-			if($os == 'Linux' || $os == 'Darwin' || $os == 'Win') {
+			if($os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
 				$this->addStatus('OS', 1);
 			} else {
 				$this->addStatus('OS', 0);
 				$this->addRecommendation('OS', 'Unknown Operating System');	
 			}
+		}
+		
+		/**
+		 * Checks for MySQL
+		 *
+		 * @return void
+		 **/
+		function checkMySQL() {
+			$ext = get_loaded_extensions();
+			if(!in_array('mysql', $ext)) {
+				
+			}
+			
+			$a = mysql_get_client_info();
+			// $a .= mysql_get_host_info();
+			// $a .= mysql_get_proto_info();
+			// $a .= mysql_get_server_info();
+			echo $a;
 		}
 	}
 	$mc->register('General');
