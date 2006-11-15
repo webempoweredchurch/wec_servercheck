@@ -336,6 +336,17 @@
 		function addValue($name, $value) {
 			$this->output[$name]['value'] = $value;
 		}
+		
+		/**
+		 * Fills in the result array.
+		 *
+		 * @return void
+		 **/
+		function message($name, $value, $status, $recommendation = null) {
+			$this->output[$name]['value'] = $value;
+			$this->output[$name]['status'] = $status;
+			(empty($recommendation)) ? null : $this->output[$name]['recommendation'] = $recommendation;
+		}
 	}
 	
 	
@@ -346,9 +357,15 @@
 	 **/
 	class PHP extends Module {
 		
+		// create some variables for use in this class
+		var $os;
+		var $api;
+		
 		function __construct() {
 			parent::__construct();
 			
+			$this->os = null;
+			$this->api = null;
 			$this->title = "PHP Info";
 		}
 		
@@ -372,15 +389,14 @@
 			$this->addValue('Version', $version);
 						
 			// get major PHP version
-			$version = explode('.', $version);
-			$majorVersion = $version[0];
-
+			$versionArray = explode('.', $version);
+			$majorVersion = $versionArray[0];
+			
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
 			if($majorVersion == 4 || $majorVersion == 5) {
-				$this->addStatus('Version', 1);
+				$this->message('Version', $version, 1);
 			} else {
-				$this->addStatus('Version', -1);				
-				$this->addRecommendation('Version', "PHP Version is too low!");
+				$this->message('Version',$version, -1, "PHP Version is too low!");				
 			}
 		}
 		
@@ -391,17 +407,15 @@
 		 **/
 		function checkServerAPI() {
 			
-			// get Server API and make it global
+			// get Server API
 			$api = php_sapi_name();
-			$GLOBALS['API'] = $api;
-			$this->addValue('Server API', $api);
+			$this->api = $api;
 					
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
 			if($api == 'cgi' || $api == 'apache') {
-				$this->addStatus('Server API', 1);
+				$this->message('Server API', $api, 1);
 			} else {
-				$this->addStatus('Server API', 0);
-				$this->addRecommendation('Server API', 'Unknown Server API');
+				$this->message('Server API', $api, 0, 'Unknown Server API');
 			}
 		}
 		
@@ -412,31 +426,36 @@
 		 **/
 		function checkOS() {
 			
-			// get OS the server is running and make it global.
+			// get OS the server is running.
 			$os = php_uname('s');
-			$GLOBALS['OS'] = $os;
-			$this->addValue('OS', $os);
+			$this->os = $os;
 			
 			// these three OS are known, display warning if an unknown one is shown.
 			if($os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
-				$this->addStatus('OS', 1);
+				$this->message('OS', $os, 1);
 			} else {
-				$this->addStatus('OS', 0);
-				$this->addRecommendation('OS', 'Unknown Operating System');	
+				$this->message('OS', $os, 0, 'Unknown Operating System');
 			}
 		}
 		
 		/**
 		 * Checks the memory limit.
-		 *
+		 * TODO: compare memory limit in bytes
 		 * @return void
 		 **/
 		function checkMemoryLimit() {
-			
+	
 			// get memory limit
 			$mlimit = ini_get('memory_limit');
-			// print_r(ini_get_all());
-			$this->addValue('Memory Limit', $mlimit);
+			
+			// if no memory limit is returned (as might be the case in Darwin), add our 
+			// own value and show a warning.
+			if(empty($mlimit)) {
+				$this->message('Memory Limit', "N/A", 0, "The memory limit could not be determined.");
+			} else {
+				
+				$this->message('Memory Limit', $mlimit, 1);
+			}
 			
 		}
 	}
@@ -523,8 +542,4 @@
 	
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
-	// foreach($mc->getModules() as $module) {
-// 		$test = new $module;
-// 		echo $renderer->render($test);
-//	}
 ?>
