@@ -27,6 +27,14 @@
 * This copyright notice MUST APPEAR in all copies of the file!
 ***************************************************************/
 
+	//-----------------------------------
+	//|			User Options			|
+	//-----------------------------------
+
+	$GLOBALS['dbHost'] = 'localhost';
+	$GLOBALS['dbUser'] = 'root';
+	$GLOBALS['dbPass'] = '';
+
 
 	//-----------------------------------
 	//|			Controllers				|
@@ -254,12 +262,12 @@
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	class General extends Module {
+	class PHP extends Module {
 		
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = "General Info";
+			$this->title = "PHP Info";
 		}
 		
 		
@@ -267,7 +275,6 @@
 			$this->checkVersion();
 			$this->checkServerAPI();
 			$this->checkOS();
-			$this->checkMySQL();
 		}
 		
 		/**
@@ -333,6 +340,52 @@
 				$this->addRecommendation('OS', 'Unknown Operating System');	
 			}
 		}
+	}
+	$mc->register('PHP');
+	
+	
+	/**
+	 * Does some basic PHP checks.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class MySQL extends Module {
+		
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = "MySQL Info";
+		}
+		
+		
+		function check() {
+			$this->checkVersion();
+			$this->checkMySQL();
+		}
+		
+		/**
+		 * Evaluates the PHP version.
+		 *
+		 * @return void
+		 **/
+		function checkVersion() {
+			
+			// get PHP version and add it as value
+			$version = phpversion();
+			$this->addValue('Version', $version);
+						
+			// get major PHP version
+			$version = explode('.', $version);
+			$majorVersion = $version[0];
+
+			// if it's PHP 4 or 5, we should be good, otherwise display error.
+			if($majorVersion == 4 || $majorVersion == 5) {
+				$this->addStatus('Version', 1);
+			} else {
+				$this->addStatus('Version', -1);				
+				$this->addRecommendation('Version', "PHP Version is too low!");
+			}
+		}
 		
 		/**
 		 * Checks for MySQL
@@ -346,13 +399,12 @@
 			}
 			
 			$a = mysql_get_client_info();
-			// $a .= mysql_get_host_info();
-			// $a .= mysql_get_proto_info();
-			// $a .= mysql_get_server_info();
+			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
+			$a .= mysql_get_server_info($con);
 			echo $a;
 		}
 	}
-	$mc->register('General');
+	$mc->register('MySQL');
 	
 	//-----------------------------------
 	//|			Nitty Gritty			|
