@@ -42,8 +42,8 @@
 		
 	
 	/**
-	 * ModuleController, simply keeps a list of all the test modules.
-	 *
+	 * ModuleController, keeps a list of all the test modules and manages their
+	 * execution.
 	 * 
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
@@ -93,15 +93,12 @@
 		 * @return void
 		 **/
 		function run($module) {
-
 			$moduleName = strtolower($module);
 			if(!array_key_exists($this->results[$moduleName])) {
 				$cur = new $module;
-				$cur->check();
 				$this->results[$moduleName]['tests'] = $cur->getOutput();
 				$this->results[$moduleName]['title'] = $cur->getTitle();
 			}
-			
 			// print_r($this->results);
 		}
 		
@@ -164,15 +161,14 @@
 	 **/
 	class RenderOutput {
 	
-		/**
-		 * Table row.
-		 **/
+		// Table Row
 		var $ROW = '<tr><td>%s</td><td><pre>%s</pre></td><td>%s</td></tr>';
 
-		/**
-		 * Table title.
-		 **/
-		var $TITLE = "<th>%s</th>";
+		// Recommendation Row
+		var $RROW = '<tr class="recomrow"><td colspan="3">%s</td></tr>';
+		
+		// Table title
+		var $TITLE = '<th colspan="3">%s</th>';
 		
 		
 		/**
@@ -188,7 +184,25 @@
 				.tablefield {
 					width: 150px;
 					font-weight: bold;
+					border-bottom: 1px solid black;
 				}
+				
+				th {
+					border-bottom: 1px black solid;
+				}
+				.recomrow td{
+					border-top: 1px solid black;
+					border-bottom: 1px solid black;
+					text-align: center;
+					font-size: 10pt;
+					background: orange;
+				}
+				
+				table {
+					border: 1px solid black;
+					margin-bottom: 10px;
+				}
+				
 			</style>';
 
 			
@@ -209,14 +223,15 @@
 		 * @return String
 		 **/
 		function render($testData, $title) {
-
-			$show = '<table>';
+			$show = '<table cellspacing="0">';
 			$show .= sprintf($this->TITLE, $title);
 			$show .= '<tr><td class="tablefield">Name</td><td class="tablefield">Value</td><td class="tablefield">Status</td></tr>';
 			foreach($testData as $key => $value) {
 				$status = $this->getStatus($value['status']);
-				isset($value['recommendation']) ? $recom = $value['recommendation'] : $recom = null;
-				$show .= sprintf($this->ROW, $key, $value['value'], $status . "<br />" . $recom);
+				$show .= sprintf($this->ROW, $key, $value['value'], $status);
+				if(isset($value['recommendation'])) {
+					$show .= sprintf($this->RROW, $value['recommendation']);	
+				}
 			}
 			$show .= '</table>';
 			
@@ -357,15 +372,9 @@
 	 **/
 	class PHP extends Module {
 		
-		// create some variables for use in this class
-		var $os;
-		var $api;
-		
 		function __construct() {
 			parent::__construct();
-			
-			$this->os = null;
-			$this->api = null;
+
 			$this->title = "PHP Info";
 		}
 		
@@ -375,6 +384,7 @@
 			$this->checkServerAPI();
 			$this->checkOS();
 			$this->checkMemoryLimit();
+			$this->checkUploadLimit();
 		}
 		
 		/**
@@ -386,7 +396,6 @@
 			
 			// get PHP version and add it as value
 			$version = phpversion();
-			$this->addValue('Version', $version);
 						
 			// get major PHP version
 			$versionArray = explode('.', $version);
@@ -409,7 +418,6 @@
 			
 			// get Server API
 			$api = php_sapi_name();
-			$this->api = $api;
 					
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
 			if($api == 'cgi' || $api == 'apache') {
@@ -428,7 +436,6 @@
 			
 			// get OS the server is running.
 			$os = php_uname('s');
-			$this->os = $os;
 			
 			// these three OS are known, display warning if an unknown one is shown.
 			if($os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
@@ -451,12 +458,70 @@
 			// if no memory limit is returned (as might be the case in Darwin), add our 
 			// own value and show a warning.
 			if(empty($mlimit)) {
-				$this->message('Memory Limit', "N/A", 0, "The memory limit could not be determined.");
+				$recom = 'The memory limit could not be determined. This is okay if you are on Mac OS X,
+					but please make sure the memory limit is at least 32M.';
+				$this->message('Memory Limit', "N/A", 0, $recom);
 			} else {
 				
 				$this->message('Memory Limit', $mlimit, 1);
 			}
 			
+		}
+	
+		/**
+		 * Checks the upload limit for Typo3's default.
+		 *
+		 * @return void
+		 **/
+		function checkUploadLimit() {
+			
+			// get max upload filesize
+			$ulimit = ini_get('upload_max_filesize');
+			
+			// good value = default in Typo3 is 10M
+			$good = '10M';
+			$bad = '2M';
+			
+			// convert both to bytes
+			$bytes = $this->returnBytes($ulimit);
+			$gbytes = $this->returnBytes($good);
+			$bbytes = $this->returnBytes($bad);
+			
+			// if more than good, all good.
+			// else if lower than min, fail.
+			// else it could still be okay, warning.
+			if($bytes >= $gbytes) {
+				$this->message("Max Upload Filesize", $ulimit, 1);
+			} else if ($bytes < $bbytes) {
+				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise it to at least 10M.';
+				$this->message("Max Upload Filesize", $ulimit, -1, $recom);
+			} else {
+				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising it to 10M.';
+				$this->message("Max Upload Filesize", $ulimit, 0, $recom);
+			}
+			
+		}
+		
+		/**
+		 * Takes PHP style number and converts to byte.
+		 *
+		 * @return int
+		 **/
+		function returnBytes($val) {
+		   	$val = trim($val);
+		   	$last = strtolower($val{strlen($val)-1});
+		
+		   	switch($last) {
+		       	// The 'G' modifier is available since PHP 5.1.0
+		       	case 'g':
+		           	$val *= 1024;
+		       	case 'm':
+		           	$val *= 1024;
+		       	case 'k':
+		           	$val *= 1024;
+		   	}
+
+		   	return $val;
 		}
 	}
 	$mc->register('PHP');
@@ -534,12 +599,71 @@
 	}
 	$mc->register('MySQL');
 	
+	/**
+	 * Checks file permissions
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	 class FilePermissions extends Module {
+		
+		/**
+		 * Constructor
+		 *
+		 **/
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = 'File Permissions';
+		}
+		
+		function check() {
+			$this->checkW();
+		}
+		
+		/**
+		 * Checks which permissions are needed to read, write, and execute files.
+		 *
+		 * @return void
+		 **/
+		function checkW() {
+			
+			// try to create a tmp folder first
+			$perms = array(octdec(0777), 0775, 0755, 0555, 0554, 0544, 0444);
+			print_r($perms);
+			// clear file cache just to be sure
+			clearstatcache();
+			
+			// check if tmp dir already exists for some crazy reason and delete it
+			// and everything in it.
+			if(file_exists('tmp')) {
+				foreach(glob('tmp/*') as $file) {
+					unlink($file);					
+				}
+				rmdir('tmp');
+			}
+			
+			foreach($perms as $perm) {
+				$out = mkdir('tmp', $perm);			
+				if(!$out) {
+					$this->message('Minimum File Permissions', "N/A", -1, 'Could not create temporary folder.');
+					return;
+				}
+				
+				$test = touch('tmp/test.php');
+				echo $perm . ': ' . $test;
+				unlink('tmp/test.php');
+				rmdir('tmp');
+			}
+
+		}
+	}
+	$mc->register('FilePermissions');
+	
 	//-----------------------------------
 	//|			Nitty Gritty			|
 	//-----------------------------------
 	
 	error_reporting(0);
-	
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
 ?>
