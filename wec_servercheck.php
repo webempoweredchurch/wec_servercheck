@@ -39,9 +39,14 @@
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
 	
+	// !!!! DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
+
+	//-----------------------------------
+	//|			Misc Options			|
+	//-----------------------------------
+	
 	// Path to this script from a web browser, without the name of the script. 
-	// Don't forget the trailing slash.
-	$GLOBALS['scriptPath'] = 'http://localhost/typo3/wec_servercheck/';
+	$GLOBALS['scriptPath'] = substr($_SERVER['SCRIPT_URI'], 0, -19);
 
 
 	//-----------------------------------
