@@ -31,6 +31,10 @@
 	//|			User Options			|
 	//-----------------------------------
 
+	// MySQL database options
+	// dbHost: it's probably okay to leave at localhost
+	// dbUser: the database user that typo3 uses
+	// dbPass: the password for dbUser
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
@@ -185,7 +189,7 @@
 			
 			<style type="text/css">
 				.tablefield {
-					width: 150px;
+					width: 200px;
 					font-weight: bold;
 					border-bottom: 1px solid black;
 				}
@@ -213,6 +217,10 @@
 				$output .= $this->render($module['tests'], $module['title']);
 			}
 			
+			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the Install forum on www.webempoweredchurch.com. Thank you!';
+			$output .= '<div style="width: 600px;">' . $note . '</div>';
+			
+			
 			$output .= '</body></head>';
 			
 			return $output;
@@ -236,6 +244,7 @@
 					$show .= sprintf($this->RROW, $value['recommendation']);	
 				}
 			}
+			
 			$show .= '</table>';
 			
 			return $show;
@@ -723,6 +732,7 @@
 					$this->message('Minimum read permissions', $perm, -1, "Reading file failed.");
 				}
 
+
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
 				if(!$sym && stripos('win', $this->mc->getTestResult('PHP', 'OS'))) {
@@ -758,7 +768,7 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	//error_reporting(0);
+	error_reporting(0);
 	
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
