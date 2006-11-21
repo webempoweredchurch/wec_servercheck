@@ -46,9 +46,8 @@
 	//-----------------------------------
 	
 	// Path to this script from a web browser, without the name of the script. 
-	$GLOBALS['scriptPath'] = substr($_SERVER['SCRIPT_URI'], 0, -19);
-
-
+	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . substr($_SERVER['REQUEST_URI'], 0, -19);
+	
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
@@ -389,7 +388,7 @@
 	   * @desc Fetches all the headers
 	   */
 	   function getHeaders($url,$format=0) {
-		
+
 			$url_info=parse_url($url);
 			$port = isset($url_info['port']) ? $url_info['port'] : 80;
 			$fp=fsockopen($url_info['host'], $port, $errno, $errstr, 30);
@@ -815,7 +814,7 @@
 	
 	// turn off error reporting. After all, that's what we're doing here.
 	error_reporting(0);
-	
+
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
 ?>
