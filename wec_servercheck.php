@@ -94,7 +94,7 @@
 		 **/
 		function run($module) {
 			$moduleName = strtolower($module);
-			if(!array_key_exists($this->results[$moduleName])) {
+			if(!array_key_exists($moduleName, $this->results)) {
 				$cur = new $module;
 				$this->results[$moduleName]['tests'] = $cur->getOutput();
 				$this->results[$moduleName]['title'] = $cur->getTitle();
@@ -618,6 +618,7 @@
 		
 		function check() {
 			$this->checkW();
+			$this->checkR();
 		}
 		
 		/**
@@ -627,9 +628,9 @@
 		 **/
 		function checkW() {
 			
-			// try to create a tmp folder first
-			$perms = array(octdec(0777), 0775, 0755, 0555, 0554, 0544, 0444);
-			print_r($perms);
+			// define permissions we want to test
+			$perms = array('0777', '0775', '0755', '0744');
+
 			// clear file cache just to be sure
 			clearstatcache();
 			
@@ -642,20 +643,76 @@
 				rmdir('tmp');
 			}
 			
+			// now create a folder with each of the permissions defined above.
 			foreach($perms as $perm) {
-				$out = mkdir('tmp', $perm);			
+				$out = mkdir('tmp', octdec($perm));			
+
+				// if that didn't work we have a problem
 				if(!$out) {
-					$this->message('Minimum File Permissions', "N/A", -1, 'Could not create temporary folder.');
+					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
 					return;
 				}
 				
+				// if the previous did work, create a temp file and get the return value
 				$test = touch('tmp/test.php');
-				echo $perm . ': ' . $test;
+
+				// if write was successful, save the file permissions in the results. It will 
+				// overwrite this until one of them doesn't work, and leave it at the minimum
+				// that did work which is exactly what we want.
+				if($test) $this->message('Minimum write permissions', $perm, 1);
+
+				// remove the temporary file and folder
 				unlink('tmp/test.php');
 				rmdir('tmp');
 			}
 
 		}
+		
+		/**
+		 * Creates a temporary file and tries to read it over HTTP.
+		 *
+		 * @return void
+		 **/
+		function checkR() {
+			  // define permissions we want to test
+			$perms = array('0777', '0775', '0755', '0744');
+
+			// clear file cache just to be sure
+			clearstatcache();
+
+			// check if tmp dir already exists for some crazy reason and delete it
+			// and everything in it.
+			if(file_exists('tmp')) {
+				foreach(glob('tmp/*') as $file) {
+					unlink($file);					
+				}
+				rmdir('tmp');
+			}
+
+			// now create a folder with each of the permissions defined above.
+			foreach($perms as $perm) {
+				$out = mkdir('tmp', octdec($perm));			
+
+				// if that didn't work we have a problem
+				if(!$out) {
+					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
+					return;
+				}
+
+				// if the previous did work, create a temp file and get the return value
+				$test = touch('tmp/test.php');
+
+				// if write was successful, save the file permissions in the results. It will 
+				// overwrite this until one of them doesn't work, and leave it at the minimum
+				// that did work which is exactly what we want.
+				if($test) $this->message('Minimum write permissions', $perm, 1);
+
+				// remove the temporary file and folder
+				unlink('tmp/test.php');
+				rmdir('tmp');
+			}
+		}
+		
 	}
 	$mc->register('FilePermissions');
 	
@@ -663,7 +720,7 @@
 	//|			Nitty Gritty			|
 	//-----------------------------------
 	
-	error_reporting(0);
+	//error_reporting(0);
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
 ?>
