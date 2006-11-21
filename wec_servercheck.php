@@ -772,7 +772,7 @@
 				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
 
 				// check for good headers from file, if they are, output, if not, it's bad!
-				if(stripos($headers[0], "200 OK") !== false) {
+				if(strpos($headers[0], "200 OK") !== false) {
 					$this->message('Minimum read permissions', $perm, 1);
 				} else {
 					$this->message('Minimum read permissions', $perm, -1, "Reading file failed.");
@@ -781,17 +781,17 @@
 
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
-				if(!$sym && stripos('win', $this->mc->getTestResult('PHP', 'OS'))) {
+				if(!$sym && strpos('win', strtolower($this->mc->getTestResult('PHP', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
 					$this->message('Symlinks', 'Problem', 0, $recom);
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !stripos('win', $this->mc->getTestResult('PHP', 'OS'))) {
+				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestResult('PHP', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created.';
 					$this->message('Symlinks', 'Problem', -1, $recom);
 
 				// symlink is there and header is good
-				} else if ($sym && stripos($sHeaders[0], "200 OK") !== false) {
+				} else if ($sym && strpos($sHeaders[0], "200 OK") !== false) {
 					$this->message('Symlinks', 'Success', 1);
 				
 				// symlink is there but couldn't be read
