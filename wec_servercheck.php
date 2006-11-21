@@ -194,7 +194,7 @@
 			
 			<style type="text/css">
 				.tablefield {
-					width: 200px;
+					width: 230px;
 					font-weight: bold;
 					border-bottom: 1px solid black;
 				}
