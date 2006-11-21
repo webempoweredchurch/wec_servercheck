@@ -34,6 +34,10 @@
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
+	
+	// Path to this script from a web browser. 
+	// Don't forget the trailing slash.
+	$GLOBALS['scriptPath'] = 'http://localhost/typo3/wec_servercheck/';
 
 
 	//-----------------------------------
@@ -128,11 +132,10 @@
 			
 			// if the array key already exists, the test has already run, so just return the result.
 			// if not, run the test first.
-			if(!array_key_exists($results[$testName][$subtest])) {
+			if(!isset($results[$testName][$subtest])) {
 				$this->run($test);
 			}
-			
-			return $results[$test]['tests'][$subtest]['value'];
+			return $this->results[$testName]['tests'][$subtest]['value'];
 		}
 		
 		/**
@@ -146,7 +149,7 @@
 	}
 	
 	$mc = new ModuleController();
-
+	$GLOBALS['MC'] = $mc;
 
 
 	//-----------------------------------
@@ -273,6 +276,7 @@
 
 		var $output;
 		var $title;
+		var $mc;
 
 		/**
 		 * PHP4 constructor.
@@ -289,6 +293,7 @@
 		 **/
 		function __construct() {
 			$this->output = array();
+			$this->mc = $GLOBALS['MC'];
 			$this->check();
 		}
 
@@ -688,9 +693,9 @@
 				}
 				rmdir('tmp');
 			}
-
-			// now create a folder with each of the permissions defined above.
+			
 			foreach($perms as $perm) {
+			
 				$out = mkdir('tmp', octdec($perm));			
 
 				// if that didn't work we have a problem
@@ -699,16 +704,48 @@
 					return;
 				}
 
-				// if the previous did work, create a temp file and get the return value
-				$test = touch('tmp/test.php');
+				// if the previous did work, create a temp file that we can read over http.
+				$fileHandle = fopen('tmp/test.php', 'w+');
+				$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
+				fclose($fileHandle);
+				
+				// now create a symlink to the file to check whether that works
+				$sym = symlink('test.php', 'tmp/symtest.php');
+			
+				// get headers for the file and symlink we just created
+				$sHeaders = get_headers($GLOBALS['scriptPath'] . "tmp/symtest.php");
+				$headers = get_headers($GLOBALS['scriptPath'] . "tmp/test.php");
 
-				// if write was successful, save the file permissions in the results. It will 
-				// overwrite this until one of them doesn't work, and leave it at the minimum
-				// that did work which is exactly what we want.
-				if($test) $this->message('Minimum write permissions', $perm, 1);
+				// check for good headers from file, if they are, output, if not, it's bad!
+				if(stripos($headers[0], "200 OK") !== false) {
+					$this->message('Minimum read permissions', $perm, 1);
+				} else {
+					$this->message('Minimum read permissions', $perm, -1, "Reading file failed.");
+				}
 
+				// check symlink:
+				// if no symlink was created and this is windows show warning.
+				if(!$sym && stripos('win', $this->mc->getTestResult('PHP', 'OS'))) {
+					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
+					$this->message('Symlinks', 'Problem', 0, $recom);
+				
+				// no symlink was created, but we aren't using Windows; that's not good.
+				} else if(!$sym && !stripos('win', $this->mc->getTestResult('PHP', 'OS'))) {
+					$recom = 'Symlinks couldn\'t be created.';
+					$this->message('Symlinks', 'Problem', -1, $recom);
+
+				// symlink is there and header is good
+				} else if ($sym && stripos($sHeaders[0], "200 OK") !== false) {
+					$this->message('Symlinks', 'Success', 1);
+				
+				// symlink is there but couldn't be read
+				} else {
+					$this->message('Symlinks', 'Problem', -1, "Reading symlink failed.");
+				}
+				
 				// remove the temporary file and folder
 				unlink('tmp/test.php');
+				unlink('tmp/symtest.php');
 				rmdir('tmp');
 			}
 		}
@@ -720,7 +757,9 @@
 	//|			Nitty Gritty			|
 	//-----------------------------------
 	
+	// turn off error reporting. After all, that's what we're doing here.
 	//error_reporting(0);
+	
 	$mc->runAll();
 	echo $renderer->renderAll($mc->getResults());
 ?>
