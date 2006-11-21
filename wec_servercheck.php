@@ -175,9 +175,10 @@
 		// Table Row
 		var $ROW = '<tr><td>%s</td><td><pre>%s</pre></td><td>%s</td></tr>';
 
-		// Recommendation Row
-		var $RROW = '<tr class="recomrow"><td colspan="3">%s</td></tr>';
-		
+		// Recommendation Rows
+		var $RROWW = '<tr class="recomrowwarn"><td colspan="3">%s</td></tr>';
+		var $RROWF = '<tr class="recomrowfail"><td colspan="3">%s</td></tr>';
+				
 		// Table title
 		var $TITLE = '<th colspan="3">%s</th>';
 		
@@ -201,7 +202,15 @@
 				th {
 					border-bottom: 1px black solid;
 				}
-				.recomrow td{
+				.recomrowfail td{
+					border-top: 1px solid black;
+					border-bottom: 1px solid black;
+					text-align: center;
+					font-size: 10pt;
+					background: red;
+				}
+				
+				.recomrowwarn td{
 					border-top: 1px solid black;
 					border-bottom: 1px solid black;
 					text-align: center;
@@ -244,8 +253,10 @@
 			foreach($testData as $key => $value) {
 				$status = $this->getStatus($value['status']);
 				$show .= sprintf($this->ROW, $key, $value['value'], $status);
-				if(isset($value['recommendation'])) {
-					$show .= sprintf($this->RROW, $value['recommendation']);	
+				if(isset($value['recommendation']) && $value['status'] == 0) {
+					$show .= sprintf($this->RROWW, $value['recommendation']);	
+				} else if (isset($value['recommendation']) && $value['status'] == -1) {
+					$show .= sprintf($this->RROWF, $value['recommendation']);	
 				}
 			}
 			
@@ -386,7 +397,7 @@
 	   * @param string $url
 	   * @param int $format
 	   * @desc Fetches all the headers
-	   */
+	   **/
 	   function getHeaders($url,$format=0) {
 
 			$url_info=parse_url($url);
@@ -511,16 +522,28 @@
 	
 			// get memory limit
 			$mlimit = ini_get('memory_limit');
+
+			// set the good limit, which is 32M
+			$glimit = '32M';
 			
-			// if no memory limit is returned (as might be the case in Darwin), add our 
-			// own value and show a warning.
-			if(empty($mlimit)) {
-				$recom = 'The memory limit could not be determined. This is okay if you are on Mac OS X,
-					but please make sure the memory limit is at least 32M.';
-				$this->message('Memory Limit', "N/A", 0, $recom);
-			} else {
-				
+			// convert both to bytes
+			$mlimitBytes = $this->returnBytes($mlimit);
+			$glimitBytes = $this->returnBytes($glimit);
+			
+			
+			// if ours is more than recommended...
+			if($mlimitBytes >= $glimitBytes) {
 				$this->message('Memory Limit', $mlimit, 1);
+				
+			// else if no memory limit in place, so that's good, too...
+			} else if (empty($mlimit)) {
+				$this->message('Memory Limit', "No memory limit in effect!", 1);
+
+			// else it's too low :()
+			} else {
+				$recom = 'The memory limit is too low. Please set it to at least 32M in php.ini or ask your
+					host to do so.';
+				$this->message('Memory Limit', $mlimit, -1, $recom);
 			}
 			
 		}
@@ -662,7 +685,6 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	 class FilePermissions extends Module {
-		
 		/**
 		 * Constructor
 		 *
