@@ -39,7 +39,7 @@
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
 	
-	// Path to this script from a web browser. 
+	// Path to this script from a web browser, without the name of the script. 
 	// Don't forget the trailing slash.
 	$GLOBALS['scriptPath'] = 'http://localhost/typo3/wec_servercheck/';
 
@@ -375,6 +375,45 @@
 			$this->output[$name]['value'] = $value;
 			$this->output[$name]['status'] = $status;
 			(empty($recommendation)) ? null : $this->output[$name]['recommendation'] = $recommendation;
+		}
+
+	   /**
+	   * @return array
+	   * @param string $url
+	   * @param int $format
+	   * @desc Fetches all the headers
+	   */
+	   function getHeaders($url,$format=0) {
+		
+			$url_info=parse_url($url);
+			$port = isset($url_info['port']) ? $url_info['port'] : 80;
+			$fp=fsockopen($url_info['host'], $port, $errno, $errstr, 30);
+			if($fp) {
+			    $head = "HEAD ".@$url_info['path']."?".@$url_info['query'];
+			    $head .= " HTTP/1.0\r\nHost: ".@$url_info['host']."\r\n\r\n";
+			    fputs($fp, $head);
+			    while(!feof($fp)) {
+			    	if($header=trim(fgets($fp, 1024))) {
+			            if($format == 1) {
+			                $h2 = explode(':',$header);
+			                // the first element is the http header type, such as HTTP/1.1 200 OK,
+			                // it doesn't have a separate name, so we have to check for it.
+			                if($h2[0] == $header) {
+			                    $headers['status'] = $header;
+			                }
+			                else {
+			                    $headers[strtolower($h2[0])] = trim($h2[1]);
+			                }
+			            }
+			            else {
+			                $headers[] = $header;
+			            }
+			        }
+			    }
+			    return $headers;
+			} else {
+			    return false;
+			}
 		}
 	}
 	
@@ -721,9 +760,11 @@
 				// now create a symlink to the file to check whether that works
 				$sym = symlink('test.php', 'tmp/symtest.php');
 			
+			
+				
 				// get headers for the file and symlink we just created
-				$sHeaders = get_headers($GLOBALS['scriptPath'] . "tmp/symtest.php");
-				$headers = get_headers($GLOBALS['scriptPath'] . "tmp/test.php");
+				$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
+				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
 
 				// check for good headers from file, if they are, output, if not, it's bad!
 				if(stripos($headers[0], "200 OK") !== false) {
