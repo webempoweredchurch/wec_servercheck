@@ -51,7 +51,6 @@
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
-		
 	
 	/**
 	 * ModuleController, keeps a list of all the test modules and manages their
@@ -701,12 +700,13 @@
 	}
 	$mc->register('MySQL');
 	
+	
 	/**
 	 * Checks file permissions
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	 class FilePermissions extends Module {
+	class FilePermissions extends Module {
 		/**
 		 * Constructor
 		 *
@@ -847,11 +847,55 @@
 				unlink('tmp/symtest.php');
 				rmdir('tmp');
 			}
-		}
-		
+		}	
 	}
 	$mc->register('FilePermissions');
 	
+	
+	/**
+	 * This class tests the apache environment for mod_rewrite and .htaccess stuff.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+
+	class Apache extends Module {
+		
+		/**
+		 * Constructor
+		 *
+		 * @return void
+		 **/
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = 'Apache Tests';
+		}
+		
+		function check() {
+			$this->checkVersion();
+			$this->checkModRewrite();
+		}
+		
+		function checkModRewrite() {
+			$this->message('mod_rewrite', 'present', 1);
+			print_r($_SERVER['SERVER_SOFTWARE']);
+			// phpinfo();
+		}
+		
+		function checkVersion() {
+			$exploded = explode(' ', $_SERVER['SERVER_SOFTWARE']);
+
+			foreach($exploded as $single) {
+				if(strpos($single, 'Apache') !== false) {
+					$apache = explode('/', $single);
+					$version = $apache[1];
+					$this->message('Version', $version, 1);
+				}
+			}
+		}
+	}
+	$mc->register('Apache');
+		
 	//-----------------------------------
 	//|			Nitty Gritty			|
 	//-----------------------------------
