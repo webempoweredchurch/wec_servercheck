@@ -230,7 +230,7 @@
 				$output .= $this->render($module['tests'], $module['title']);
 			}
 			
-			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the Install forum on www.webempoweredchurch.com. Thank you!';
+			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
 			$output .= '<div style="width: 600px;">' . $note . '</div>';
 			
 			
