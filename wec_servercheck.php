@@ -626,34 +626,56 @@
 		
 		function check() {
 			$this->checkStatus();
-			
-			if($this->running) {
-				$this->checkVersion();
+			$this->checkClient();			
+
+			if($this->running) {				
+				$this->checkServer();
+				$this->checkHost();
 			}
 		}
 		
 		/**
-		 * Evaluates the MySQL version.
+		 * Checks the MySQL host connection
 		 *
 		 * @return void
 		 **/
-		function checkVersion() {
+		function checkHost() {
+			$host = mysql_get_host_info();
+			$this->message('Host Info', $host, 1);
+		}
+		
+		
+		/**
+		 * Checks the MySQL client version
+		 *
+		 * @return void
+		 **/
+		function checkClient() {
+			$version = mysql_get_client_info();
+			$this->message('Client Version', $version, 1);
+		}
+		
+		
+		/**
+		 * Evaluates the MySQL server version.
+		 *
+		 * @return void
+		 **/
+		function checkServer() {
 			
 			// Establish MySQL connection and get server info if successful.
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			$version = mysql_get_server_info($con);
-			$this->addValue('Version', $version);
-
+			
 			// get major MySQL version
-			$version = explode('.', $version);
-			$majorVersion = $version[0];
+			$xVersion = explode('.', $version);
+			$majorVersion = $xVersion[0];
 
 			// if it's MySQL 4 or 5, we should be good, otherwise display error.
 			if($majorVersion == 4 || $majorVersion == 5) {
-				$this->addStatus('Version', 1);
+				$this->message('Server Version', $version, 1);
 			} else {
-				$this->addStatus('Version', -1);				
-				$this->addRecommendation('Version', "MySQL Version is not compatible!");
+				$this->message('Server Version', $version, -1, "MySQL Version is not compatible!");
 			}				
 		}
 		
