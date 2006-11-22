@@ -863,7 +863,6 @@
 		/**
 		 * Constructor
 		 *
-		 * @return void
 		 **/
 		function __construct() {
 			parent::__construct();
@@ -877,9 +876,13 @@
 		}
 		
 		function checkModRewrite() {
-			$this->message('mod_rewrite', 'present', 1);
-			print_r($_SERVER['SERVER_SOFTWARE']);
-			// phpinfo();
+			if(in_array('mod_rewrite', apache_get_modules())) {
+				$this->message('mod_rewrite', 'present', 1);				
+			} else {
+				$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
+					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+				$this->message('mod_rewrite', 'not found', 0, $recom);	
+			}
 		}
 		
 		function checkVersion() {
