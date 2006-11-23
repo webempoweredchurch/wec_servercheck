@@ -487,7 +487,7 @@
 			$api = php_sapi_name();
 					
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
-			if($api == 'cgi' || $api == 'apache') {
+			if($api == 'cgi' || $api == 'apache' || $api == 'apache2handler') {
 				$this->message('Server API', $api, 1);
 			} else {
 				$this->message('Server API', $api, 0, 'Unknown Server API');
@@ -691,7 +691,7 @@
 				$this->addStatus('Status', 1);	
 				$this->running = true;			
 			} else {
-				$this->addValue('Status', 'Problem');
+				$this->addValue('Status', 'Error');
 				$this->addStatus('Status', -1);
 				$this->addRecommendation('Status', mysql_error());	
 			}
@@ -750,7 +750,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
+					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder; check permissions.');
 					return;
 				}
 				
@@ -873,28 +873,117 @@
 		function check() {
 			$this->checkVersion();
 			$this->checkModRewrite();
+			$this->checkHtaccess();
 		}
 		
+		/**
+		 * Checks for the presence of mod_rewrite.
+		 *
+		 * @return void
+		 **/
 		function checkModRewrite() {
+			
+			// if we find mod_rewrite, all is good.
 			if(in_array('mod_rewrite', apache_get_modules())) {
 				$this->message('mod_rewrite', 'present', 1);				
-			} else {
+		
+			// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
+			} else if($this->mc->getTestResult('PHP', 'Server API') == 'apache' || $this->mc->getTestResult('PHP', 'Server API') == 'apache2handler'){
 				$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+				$this->message('mod_rewrite', 'not found', -1, $recom);	
+			
+			// if we don't find it, and the server api is not apache, we can't really say whether it's there or not.
+			} else {
+				$recom = 'mod_rewrite could not be found, but that is because PHP is not running under Apache, which 
+					is perfectly fine. Check to make sure that the \' Rewrite \' test was successful.';
 				$this->message('mod_rewrite', 'not found', 0, $recom);	
 			}
 		}
 		
+		/**
+		 * Returns the Apache version.
+		 *
+		 * @return void
+		 **/
 		function checkVersion() {
-			$exploded = explode(' ', $_SERVER['SERVER_SOFTWARE']);
+            $exploded = explode(' ', $_SERVER['SERVER_SOFTWARE']);
 
-			foreach($exploded as $single) {
-				if(strpos($single, 'Apache') !== false) {
-					$apache = explode('/', $single);
-					$version = $apache[1];
-					$this->message('Version', $version, 1);
-				}
+            foreach($exploded as $single) {
+                if(strpos($single, 'Apache') !== false) {
+                    $apache = explode('/', $single);
+                    $version = $apache[1];
+					if(empty($version)) {
+						$recom = 'Apache version couldn\'t be determined, probably because Apache is configured not
+							to display its version information. This is usually okay.';
+						$this->message('Version', 'not found', 0, $recom);
+					} else {
+                    	$this->message('Version', $version, 1);
+					}
+                }
+            }
+		}
+		
+		/**
+		 * Checks whether .htaccess files are allowed.
+		 *
+		 * @return void
+		 **/
+		function checkHtaccess() {
+			
+			// get minimum file permissions from earlier test
+			$perms = $this->mc->getTestResult('FilePermissions', 'Minimum write permissions');
+			
+			// create temp folder to create .htaccess file in.
+			mkdir('test123', octdec($perms));
+			
+			// this goes into the .htaccess file
+			$htaccess = "<IfModule mod_rewrite.c> \n
+			Options +FollowSymlinks \n
+			RewriteEngine On \n
+			RewriteRule ^test.php rewrite_test.php \n
+			</IfModule>";
+			
+			// and this goes into our php file
+			$php = '<?php echo "Hello World!"; ?>';
+			
+			// write our htaccess file
+			$fileHandle = fopen('test123/.htaccess', 'w+');
+			$bla = fwrite($fileHandle, $htaccess);
+			fclose($fileHandle);
+			
+			// write our php file
+			$fileHandle = fopen('test123/rewrite_test.php', 'w+');
+			$bla = fwrite($fileHandle, $php);
+			fclose($fileHandle);
+			
+			// Now check headers on the real file...
+			$rheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/rewrite_test.php');
+			
+			// .. and the virtual file
+			$vheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/test.php');
+			
+			// if we get a 200 OK and the headers are the same, it worked!
+			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
+				$this->message('Rewrite URLs', 'Success', 1);
+			
+			// if we get a 404 not found on the virtual file and mod_rewrite was there, overriding with .htaccess
+			// is probably not allowed.
+			} else if(strpos(strtolower($vheaders[0]), '404 not found') !== false && $this->output['mod_rewrite']['status'] == 1) {
+				$recom = "Rewriting URLs failed. Your host doesn't allow overriding settings with .htaccess files.
+					Make sure that 'AllowOverride All' is set for your virtual host in your Apache config.";
+				$this->message('Rewrite URLs', 'Failed', -1, $recom);
 			}
+			// implicit here is that if the mod_rewrite test failed, rewriting obviously cannot work, so we don't show
+			// any results since the user should already know that it won't work.
+			
+			
+			// clean up
+			unlink('test123/.htaccess');
+			unlink('test123/rewrite_test.php');
+			rmdir('test123');
+			
+			
 		}
 	}
 	$mc->register('Apache');
