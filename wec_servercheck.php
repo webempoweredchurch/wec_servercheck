@@ -38,6 +38,7 @@
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
+	$GLOBALS['siteURL'] = 'http://localhost/typo3/';
 	
 	// !!!! DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
 
@@ -987,7 +988,58 @@
 		}
 	}
 	$mc->register('Apache');
+	
+	
+	/**
+	 * Specific TYPO3 tests, like checking permissions in various folders and whether default configuration
+	 * has been changed.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	 class TYPO3 extends Module {
 		
+		/**
+		 * Constructor
+		 *
+		 **/
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = 'TYPO3 tests';
+		}
+		
+		function check() {
+			$this->checkBaseTag();
+		}
+		
+		/**
+		 * Checks for the base tag in the TYPO3 install to see if it has been changed from the default.
+		 *
+		 * @return void
+		 **/
+		function checkBaseTag() {
+			
+			// open the site url, as defined above, and read
+			// the first few kb of it.
+			$handle = fopen($GLOBALS['siteURL'], 'r');
+			$output = fread($handle, 8192);
+
+			// search for the base tag url
+			preg_match('!.*<base href="(.*)".*>!', $output, $bla);
+			
+			// compare the base tag url with the default, which should have been changed.
+			if($bla[1] == 'http://demo.webempoweredchurch.org') {
+				$recom = 'The base tag is still at its default value and needs to be changed
+					to the address of your TYPO3 installation.';
+				$this->message('Base Tag', $bla[1], -1, $recom);
+			} else {
+				$this->message('Base Tag', $bla[1], 1);				
+			}
+		}
+	}
+	$mc->register('TYPO3');
+	
+	
 	//-----------------------------------
 	//|			Nitty Gritty			|
 	//-----------------------------------
