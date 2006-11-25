@@ -487,6 +487,7 @@
 			$this->checkOS();
 			$this->checkMemoryLimit();
 			$this->checkUploadLimit();
+			$this->checkExec();
 		}
 		
 		/**
@@ -644,7 +645,14 @@
 		 * @return void
 		 **/
 		function checkExec() {
-			
+			exec('ls -al', $output);
+			if($output) {
+				$this->message('exec()', 'success', 1);
+			} else {
+				$recom = 'Could not use exec() on this server. Please check with your host and make sure that the
+					use of exec() is allowed.';
+				$this->message('exec()', 'success', -1, $recom);
+			}
 		}
 	}
 	$mc->register('PHP');
@@ -775,6 +783,7 @@
 					sure you configure TYPO3 to not	use persistent connections.';
 				$this->message('Persistent connection', 'Failed', 0, $recom);
 			}
+			mysql_close($link);
 		}
 	}
 	$mc->register('MySQL');
