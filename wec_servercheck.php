@@ -753,7 +753,6 @@
 			// check if tmp dir already exists for some crazy reason and delete it
 			// and everything in it.
 			if(file_exists('tmp')) {
-				print_r(glob('tmp/*'));
 				foreach(glob('tmp/*') as $file) {
 					unlink($file);					
 				}
