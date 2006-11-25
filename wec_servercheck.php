@@ -32,23 +32,37 @@
 	//-----------------------------------
 
 	// MySQL database options
-	// dbHost: it's probably okay to leave at localhost
+	// dbHost: it's probably okay to leave as localhost
 	// dbUser: the database user that typo3 uses
 	// dbPass: the password for dbUser
+	// relativePath: The relative path to the TYPO3 installation. If TYPO3 is installed in a 
+	//		subfolder, put '/subfolder/', if it's installed in the website root, leave empty.
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
-	$GLOBALS['siteURL'] = 'http://localhost/typo3/';
+	$GLOBALS['relativePath'] = '/wec/';
 	
 	// !!!! DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
+
+
+
+
 
 	//-----------------------------------
 	//|			Misc Options			|
 	//-----------------------------------
 	
 	// Path to this script from a web browser, without the name of the script. 
-	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . substr($_SERVER['REQUEST_URI'], 0, -19);
+	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . 
+		substr($_SERVER['REQUEST_URI'], 0, -19);
 	
+	// TYPO3 path in the file system.
+	$GLOBALS['TYPO3Path'] = $_SERVER['DOCUMENT_ROOT'] . $GLOBALS['relativePath'];
+	
+	// TYPO3 path from a browser.
+	$GLOBALS['TYPO3WebPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
+		$GLOBALS['relativePath'];
+ 	
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
@@ -739,6 +753,7 @@
 			// check if tmp dir already exists for some crazy reason and delete it
 			// and everything in it.
 			if(file_exists('tmp')) {
+				print_r(glob('tmp/*'));
 				foreach(glob('tmp/*') as $file) {
 					unlink($file);					
 				}
@@ -1009,7 +1024,9 @@
 		}
 		
 		function check() {
+
 			$this->checkBaseTag();
+			$this->checkHtaccess();
 		}
 		
 		/**
@@ -1021,19 +1038,34 @@
 			
 			// open the site url, as defined above, and read
 			// the first few kb of it.
-			$handle = fopen($GLOBALS['siteURL'], 'r');
-			$output = fread($handle, 8192);
+			$handle = fopen($GLOBALS['TYPO3WebPath'], 'r');
+			$site = fread($handle, 8192);
 
 			// search for the base tag url
-			preg_match('!.*<base href="(.*)".*>!', $output, $bla);
+			preg_match('!.*<base href="(.*)".*>!', $site, $output);
 			
 			// compare the base tag url with the default, which should have been changed.
-			if($bla[1] == 'http://demo.webempoweredchurch.org') {
+			if($output[1] == 'http://demo.webempoweredchurch.org/') {
 				$recom = 'The base tag is still at its default value and needs to be changed
 					to the address of your TYPO3 installation.';
-				$this->message('Base Tag', $bla[1], -1, $recom);
+				$this->message('Base Tag', $output[1], -1, $recom);
 			} else {
-				$this->message('Base Tag', $bla[1], 1);				
+				$this->message('Base Tag', $output[1], 1);				
+			}
+		}
+		
+		/**
+		 * Checks whether the .htaccess file is present.
+		 *
+		 * @return void
+		 **/
+		function checkHtaccess() {
+			if(file_exists($GLOBALS['TYPO3Path'] . '.htaccess' )) {
+				$this->message('.htaccess file', 'found', 1);
+			} else {
+				$recom = 'The .htaccess file could not be found in your TYPO3 root directory. Please make sure
+					you copied it correctly from the WEC Starter Package to your web host.';
+				$this->message('.htaccess file', 'not found', -1, $recom);
 			}
 		}
 	}
