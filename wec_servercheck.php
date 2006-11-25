@@ -637,6 +637,15 @@
 
 		   	return $val;
 		}
+		
+		/**
+		 * Makes sure that exec() is working.
+		 *
+		 * @return void
+		 **/
+		function checkExec() {
+			
+		}
 	}
 	$mc->register('PHP');
 	
@@ -663,8 +672,11 @@
 			$this->checkClient();			
 
 			if($this->running) {				
+				$this->checkNormalConnection();
+				$this->checkPersistentConnection();
 				$this->checkServer();
 				$this->checkHost();
+				
 			}
 		}
 		
@@ -731,6 +743,38 @@
 				$this->addRecommendation('Status', mysql_error());	
 			}
 
+		}
+		
+		/**
+		 * Trys to establish a non-persistent connection to the MySQL server.
+		 *
+		 * @return void
+		 **/
+		function checkNormalConnection() {
+			$link = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
+			if($link) {
+				$this->message('Non-persistent connection', 'Success', 1);
+			} else {
+				$recom = 'For some reason a normal connection to the MySQL database cannot be established.';
+				$this->message('Non-persistent connection', 'Failed', -1, $recom);
+			}
+			mysql_close($link);
+		}
+		
+		/**
+		 * Trys to establish a persistent connection to the MySQL server.
+		 *
+		 * @return void
+		 **/
+		function checkPersistentConnection() {
+			$link = mysql_pconnect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
+			if($link) {
+				$this->message('Persistent connection', 'Success', 1);
+			} else {
+				$recom = 'Your setup doesn\'t allow persistent connections. In the Install Tool, make
+					sure you configure TYPO3 to not	use persistent connections.';
+				$this->message('Persistent connection', 'Failed', 0, $recom);
+			}
 		}
 	}
 	$mc->register('MySQL');
@@ -1030,6 +1074,7 @@
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
+	
 	 class TYPO3 extends Module {
 		
 		/**
