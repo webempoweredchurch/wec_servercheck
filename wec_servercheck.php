@@ -1046,7 +1046,7 @@
 
 			$this->checkBaseTag();
 			$this->checkHtaccess();
-			$this->checkRewrite();
+			$this->checkRealURL();
 		}
 		
 		/**
@@ -1090,11 +1090,11 @@
 		}
 		
 		/**
-		 * Checks if rewriting in TYPO3 works. Might be obsolete since we already tested rewriting.
+		 * Checks if rewriting in TYPO3 works.
 		 *
 		 * @return void
 		 **/
-		function checkRewrite() {
+		function checkRealURL() {
 			
 			// get the Learn & Grow page normally
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
@@ -1123,10 +1123,14 @@
 				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
 					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
 				$this->message('RealURL', 'Failed', -1, $recom);
+			
+			// if the general rewriting worked but .htaccess is missing, it obviously won't work.
 			} else if ($this->mc->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
 				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
 					copied it from the WEC Starter Package to your TYPO3 root directory.";
 				$this->message('RealURL', 'Failed', -1, $recom);
+		
+			// just a fail safe.
 			} else {
 				$this->message('RealURL', 'Failed', -1, 'Unknown error.');
 			}
