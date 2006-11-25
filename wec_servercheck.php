@@ -651,7 +651,7 @@
 			} else {
 				$recom = 'Could not use exec() on this server. Please check with your host and make sure that the
 					use of exec() is allowed.';
-				$this->message('exec()', 'success', -1, $recom);
+				$this->message('exec()', 'failed', -1, $recom);
 			}
 		}
 	}
