@@ -141,13 +141,13 @@
 		}
 		
 		/**
-		 * Returns the test result for a particular test
+		 * Returns the value for a particular test
 		 * 
 		 * @param $test The name of the main module
 		 * @param $subtest The name of the subtest, like 'Version' etc.
 		 * @return String
 		 **/
-		function getTestResult($test, $subtest) {
+		function getTestValue($test, $subtest) {
 		
 			// get name of the test in lower case to compare with array key
 			$testName = strtolower($test);
@@ -158,6 +158,26 @@
 				$this->run($test);
 			}
 			return $this->results[$testName]['tests'][$subtest]['value'];
+		}
+		
+		/**
+		 * Returns the status for a particular test
+		 * 
+		 * @param $test The name of the main module
+		 * @param $subtest The name of the subtest, like 'Version' etc.
+		 * @return String
+		 **/
+		function getTestStatus($test, $subtest) {
+		
+			// get name of the test in lower case to compare with array key
+			$testName = strtolower($test);
+			
+			// if the array key already exists, the test has already run, so just return the result.
+			// if not, run the test first.
+			if(!isset($results[$testName][$subtest])) {
+				$this->run($test);
+			}
+			return $this->results[$testName]['tests'][$subtest]['status'];
 		}
 		
 		/**
@@ -839,18 +859,18 @@
 
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
-				if(!$sym && strpos('win', strtolower($this->mc->getTestResult('PHP', 'OS')))) {
+				if(!$sym && strpos('win', strtolower($this->mc->getTestValue('PHP', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
 					$this->message('Symlinks', 'Problem', 0, $recom);
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestResult('PHP', 'OS')))) {
+				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestValue('PHP', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created.';
 					$this->message('Symlinks', 'Problem', -1, $recom);
 
 				// symlink is there and header is good
 				} else if ($sym && strpos($sHeaders[0], "200 OK") !== false) {
-					$this->message('Symlinks', 'Success', 1);
+					$this->message('Symlinks', 'success', 1);
 				
 				// symlink is there but couldn't be read
 				} else {
@@ -903,7 +923,7 @@
 				$this->message('mod_rewrite', 'present', 1);				
 		
 			// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-			} else if($this->mc->getTestResult('PHP', 'Server API') == 'apache' || $this->mc->getTestResult('PHP', 'Server API') == 'apache2handler'){
+			} else if($this->mc->getTestValue('PHP', 'Server API') == 'apache' || $this->mc->getTestValue('PHP', 'Server API') == 'apache2handler'){
 				$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->message('mod_rewrite', 'not found', -1, $recom);	
@@ -947,7 +967,7 @@
 		function checkHtaccess() {
 			
 			// get minimum file permissions from earlier test
-			$perms = $this->mc->getTestResult('FilePermissions', 'Minimum write permissions');
+			$perms = $this->mc->getTestValue('FilePermissions', 'Minimum write permissions');
 			
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
@@ -980,7 +1000,7 @@
 			
 			// if we get a 200 OK and the headers are the same, it worked!
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
-				$this->message('Rewrite URLs', 'Success', 1);
+				$this->message('Rewrite URLs', 'success', 1);
 			
 			// if we get a 404 not found on the virtual file and mod_rewrite was there, overriding with .htaccess
 			// is probably not allowed.
@@ -1026,6 +1046,7 @@
 
 			$this->checkBaseTag();
 			$this->checkHtaccess();
+			$this->checkRewrite();
 		}
 		
 		/**
@@ -1065,6 +1086,49 @@
 				$recom = 'The .htaccess file could not be found in your TYPO3 root directory. Please make sure
 					you copied it correctly from the WEC Starter Package to your web host.';
 				$this->message('.htaccess file', 'not found', -1, $recom);
+			}
+		}
+		
+		/**
+		 * Checks if rewriting in TYPO3 works. Might be obsolete since we already tested rewriting.
+		 *
+		 * @return void
+		 **/
+		function checkRewrite() {
+			
+			// get the Learn & Grow page normally
+			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
+			$norm = fread($fileHandle, 8192);
+			fclose($fileHandle);
+			
+			// get the Learn & Grow page rewritten
+			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'learn_grow/', 'r');
+			$rewr = fread($fileHandle, 8192);
+			fclose($fileHandle);
+						
+			// Now check headers on the normal page...
+			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=77');
+			
+			// .. and the rewritten page
+			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'learn_grow/');
+						
+			// if we get a 200 OK and the headers are the same plus the content of both pages is
+			// identical, it worked
+			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm == $rewr) {
+				$this->message('RealURL', 'success', 1);
+			
+			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
+			// stuff is not in this .htaccess file.
+			} else if($this->mc->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == 1){
+				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
+					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
+				$this->message('RealURL', 'Failed', -1, $recom);
+			} else if ($this->mc->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
+				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
+					copied it from the WEC Starter Package to your TYPO3 root directory.";
+				$this->message('RealURL', 'Failed', -1, $recom);
+			} else {
+				$this->message('RealURL', 'Failed', -1, 'Unknown error.');
 			}
 		}
 	}
