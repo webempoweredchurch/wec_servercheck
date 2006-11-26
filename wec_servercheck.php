@@ -193,7 +193,6 @@
 	$mc = new ModuleController();
 	$GLOBALS['MC'] = $mc;
 
-
 	//-----------------------------------
 	//|			Output Renderers		|
 	//-----------------------------------
@@ -1101,6 +1100,10 @@
 			$this->checkBaseTag();
 			$this->checkHtaccess();
 			$this->checkRealURL();
+			$this->checkDirs('fileadmin', 0);
+			$this->checkDirs('uploads', -1);
+			$this->checkDirs('typo3temp', -1);
+			$this->checkDirs('typo3conf', -1);
 		}
 		
 		/**
@@ -1188,6 +1191,49 @@
 			} else {
 				$this->message('RealURL', 'Failed', -1, 'Unknown error.');
 			}
+		}
+		
+		/**
+		 * Checks read and write for some directories inside TYPO3
+		 *
+		 * @param $directory Directory name as String.
+		 * @param $status Status to be used on failed test. Either 0 for warning or -1 for fail.
+		 * @return void
+		 **/
+		function checkDirs($directory, $status) {
+			
+			// create paths
+			$path = $GLOBALS['TYPO3Path'] . $directory . '/';
+			$webPath = $GLOBALS['TYPO3WebPath'] . $directory . '/';
+			
+			// file content
+			$file = '<?php echo "Hello World!"; ?>';
+			
+			// open file
+			$link = fopen($path . 'test.php', 'w+');
+			
+			$write = fwrite($link, $file);
+			
+			// if it couldn't be written, display a warning
+			if($write === false) {
+				$recom = 'Could not write to the ' . $directory . ' directory.';
+				$this->message($directory, 'not writable', $status, $recom);
+				return null;
+			}
+			
+			fclose($link);
+					
+			// now check headers on the just created file
+			$headers = $this->getHeaders($webPath . 'test.php');
+			if(strpos($headers[0], '200 OK')) {
+				$this->message($directory, 'readable and writable', 1);
+			} else {
+				$recom = 'File couldn\'t be read, check file permissions.';
+				$this->message($directory, 'Could not access file over HTTP.', 0, $recom);
+			}
+			
+			unlink($path . 'test.php');
+			
 		}
 	}
 	$mc->register('TYPO3');
