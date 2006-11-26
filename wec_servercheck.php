@@ -62,6 +62,9 @@
 	// TYPO3 path from a browser.
 	$GLOBALS['TYPO3WebPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
 		$GLOBALS['relativePath'];
+		
+	// fix relative path in case it's empty
+	if(empty($GLOBALS['relativePath']) $GLOBALS['relativePath'] = '/';
  	
 	//-----------------------------------
 	//|			Controllers				|
