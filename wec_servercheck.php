@@ -210,12 +210,17 @@
 	
 		// Table Row
 		var $ROW = '<tr><td>%s</td><td><pre>%s</pre></td><td>%s</td></tr>';
-
+		
+		// plain row
+		var $PROW = "%s \t\t %s \t\t %s\n";
+		
 		// Recommendation Rows
+		var $PRROW = "%s\n";
 		var $RROWW = '<tr class="recomrowwarn"><td colspan="3">%s</td></tr>';
 		var $RROWF = '<tr class="recomrowfail"><td colspan="3">%s</td></tr>';
 				
 		// Table title
+		var $PTITLE = "\n-= %s =-\n";
 		var $TITLE = '<th colspan="3">%s</th>';
 		
 		
@@ -226,6 +231,7 @@
 		 * @return String
 		 **/
 		function renderAll($results) {
+			$plain = null;
 			$output = '<html><head><title>WEC Server Checker</title></head><body>
 			
 			<style type="text/css">
@@ -264,18 +270,39 @@
 			
 			foreach($results as $module) {
 				$output .= $this->render($module['tests'], $module['title']);
+				$plain .= $this->renderPlain($module['tests'], $module['title']);
 			}
+			
 			
 			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
 			$output .= '<div style="width: 600px;">' . $note . '</div>';
 			
 			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
 			$output .= '<textarea cols="100" rows="20">';
-			$output .= print_r($results, true);
+			$output .= $plain;
 			$output .= '</textarea></p>';
 			$output .= '</body></head>';
 			
 			return $output;
+		}
+		
+		/**
+		 * Renders the module results in plain text.
+		 *
+		 * @return void
+		 **/
+		function renderPlain($testData, $title) {
+			$show = sprintf($this->PTITLE, $title);
+
+			foreach($testData as $key => $value) {
+				$status = $this->getPlainStatus($value['status']);
+				$show .= sprintf($this->PROW, $key, $value['value'], $status);
+				if(isset($value['recommendation'])) {
+					$show .= sprintf($this->PROW, $value['recommendation']);
+				}
+			}
+			
+			return $show;
 		}
 		
 		/**
@@ -305,6 +332,21 @@
 		}
 		
 		/**
+		 * Translates the status integer codes into plain text Strings.
+		 *
+		 * @return String
+		 **/
+		function getPlainStatus($status) {
+			if($status == 1) {
+				return 'Passed!';
+			} else if ($status == 0) {
+				return 'Warning!';
+			} else if ($status == -1) {
+				return 'Failed!';
+			}
+		}
+		
+		/**
 		 * Translate the status integer codes into a String or even image to display.
 		 *
 		 * @param $status Integer value of the status.
@@ -314,9 +356,9 @@
 			if($status == 1) {
 				return '<span style="color: green;">Passed!</span>';
 			} else if ($status == 0) {
-				return '<span style="color: orange;">Warning!';
+				return '<span style="color: orange;">Warning!</span>';
 			} else if ($status == -1) {
-				return '<span style="color: red;">Failed!';
+				return '<span style="color: red;">Failed!</span>';
 			}
 		}
 	} 
@@ -546,7 +588,7 @@
 			$os = php_uname('s');
 			
 			// these three OS are known, display warning if an unknown one is shown.
-			if($os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
+			if($os == 'FreeBSD' || $os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
 				$this->message('OS', $os, 1);
 			} else {
 				$this->message('OS', $os, 0, 'Unknown Operating System');
