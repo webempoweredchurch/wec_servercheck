@@ -64,7 +64,7 @@
 		$GLOBALS['relativePath'];
 		
 	// fix relative path in case it's empty
-	if(empty($GLOBALS['relativePath']) $GLOBALS['relativePath'] = '/';
+	if(empty($GLOBALS['relativePath'])) $GLOBALS['relativePath'] = '/';
  	
 	//-----------------------------------
 	//|			Controllers				|
