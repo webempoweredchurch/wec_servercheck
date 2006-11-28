@@ -973,21 +973,26 @@
 		 **/
 		function checkModRewrite() {
 			
-			// if we find mod_rewrite, all is good.
-			if(in_array('mod_rewrite', apache_get_modules())) {
-				$this->message('mod_rewrite', 'present', 1);				
+			// only do this if we can use apache php functions, i.e. PHP
+			// is not running as CGI
+			if(function_exists('apache_get_modules')) {
+
+				// if we find mod_rewrite, all is good.
+				if(in_array('mod_rewrite', apache_get_modules())) {
+					$this->message('mod_rewrite', 'present', 1);				
 		
-			// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-			} else if($this->mc->getTestValue('PHP', 'Server API') == 'apache' || $this->mc->getTestValue('PHP', 'Server API') == 'apache2handler'){
-				$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
-					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
-				$this->message('mod_rewrite', 'not found', -1, $recom);	
+				// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
+				} else if($this->mc->getTestValue('PHP', 'Server API') == 'apache' || $this->mc->getTestValue('PHP', 'Server API') == 'apache2handler'){
+					$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
+						having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+					$this->message('mod_rewrite', 'not found', -1, $recom);	
 			
-			// if we don't find it, and the server api is not apache, we can't really say whether it's there or not.
-			} else {
-				$recom = 'mod_rewrite could not be found, but that is because PHP is not running under Apache, which 
-					is perfectly fine. Check to make sure that the \' Rewrite \' test was successful.';
-				$this->message('mod_rewrite', 'not found', 0, $recom);	
+				// if we don't find it, and the server api is not apache, we can't really say whether it's there or not.
+				} else {
+					$recom = 'mod_rewrite could not be found, but that is because PHP is not running under Apache, which 
+						is perfectly fine. Check to make sure that the \' Rewrite \' test was successful.';
+					$this->message('mod_rewrite', 'not found', 0, $recom);	
+				}
 			}
 		}
 		
