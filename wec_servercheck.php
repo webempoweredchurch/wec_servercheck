@@ -269,7 +269,10 @@
 			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
 			$output .= '<div style="width: 600px;">' . $note . '</div>';
 			
-			
+			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
+			$output .= '<textarea cols="100" rows="20">';
+			$output .= print_r($results, true);
+			$output .= '</textarea></p>';
 			$output .= '</body></head>';
 			
 			return $output;
