@@ -771,9 +771,10 @@
 			// get major MySQL version
 			$xVersion = explode('.', $version);
 			$majorVersion = $xVersion[0];
+			$minorVersion = $xVersion[1];
 
 			// if it's MySQL 4 or 5, we should be good, otherwise display error.
-			if($majorVersion == 4 || $majorVersion == 5) {
+			if($majorVersion == 4 || $majorVersion == 5 || ($majorVersion == 3 && $minorVersion >= 23)) {
 				$this->message('Server Version', $version, 1);
 			} else {
 				$this->message('Server Version', $version, -1, "MySQL Version is not compatible!");
