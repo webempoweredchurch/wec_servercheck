@@ -1090,7 +1090,6 @@
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	
 	 class TYPO3 extends Module {
 		
 		/**
@@ -1181,6 +1180,10 @@
 			// identical, it worked
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm == $rewr) {
 				$this->message('RealURL', 'success', 1);
+			
+			// if we get a 404 not found, show a warning
+			} else if (strpos(strtolower($rheaders[0]), '404 not found')) {
+				$this->message('RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
 			
 			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
 			// stuff is not in this .htaccess file.
