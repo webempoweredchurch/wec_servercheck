@@ -1172,7 +1172,7 @@
 						
 			// Now check headers on the normal page...
 			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=77');
-			print_r($rheaders);
+
 			// .. and the rewritten page
 			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'learn_grow/');
 						
