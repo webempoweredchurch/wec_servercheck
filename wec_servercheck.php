@@ -1172,7 +1172,7 @@
 						
 			// Now check headers on the normal page...
 			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=77');
-			
+			print_r($rheaders);
 			// .. and the rewritten page
 			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'learn_grow/');
 						
@@ -1181,8 +1181,8 @@
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm == $rewr) {
 				$this->message('RealURL', 'success', 1);
 			
-			// if we get a 404 not found, show a warning
-			} else if (strpos(strtolower($rheaders[0]), '404 not found')) {
+			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
+			} else if (strpos($rheaders[0], '200 OK') === false) {
 				$this->message('RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
 			
 			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
