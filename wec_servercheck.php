@@ -296,7 +296,25 @@
 
 			foreach($testData as $key => $value) {
 				$status = $this->getPlainStatus($value['status']);
-				$show .= sprintf($this->PROW, $key, $value['value'], $status);
+				$length1 = strlen($key);
+				$length2 = strlen($value['value']);
+				if($length1 < 8) {
+					$pad1 = "\t\t\t";	
+				} else if ($length1 > 14) {
+					$pad1 = "\t";	
+				} else {
+					$pad1 = "\t\t";
+				}
+				
+				if($length2 < 8) {
+					$pad2 = "\t\t\t";	
+				} else if ($length2 > 14) {
+					$pad2 = "\t";	
+				} else {
+					$pad2 = "\t\t";
+				}
+
+				$show .= $key . $pad1 . $value['value'] . $pad2 .  $status . "\n";
 				if(isset($value['recommendation'])) {
 					$show .= sprintf($this->PROW, $value['recommendation']);
 				}
