@@ -641,8 +641,10 @@
 
 			// else it's too low :()
 			} else {
-				$recom = 'The memory limit is too low. Please set it to at least 32M in php.ini or ask your
-					host to do so.';
+				$recom = 'The memory limit is too low. You can try putting this line in the .htaccess file of your
+					TYPO3 root directory:<br />php_value memory_limit 8M<br />
+					If that doesn\'t work and you have access to your php.ini, please set it to at least 32M or ask your
+					host to do so if you don\'t have access to it.';
 				$this->message('Memory Limit', $mlimit, -1, $recom);
 			}
 			
