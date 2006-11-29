@@ -960,7 +960,12 @@
 				fclose($fileHandle);
 				
 				// now create a symlink to the file to check whether that works
-				$sym = symlink('test.php', 'tmp/symtest.php');
+				if(function_exists('symlink')) {
+					$sym = symlink('test.php', 'tmp/symtest.php');	
+				} else {
+					$sym = false;
+				}
+				
 			
 			
 				
