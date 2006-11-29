@@ -967,10 +967,7 @@
 				} else {
 					$sym = false;
 				}
-				
-			
-			
-				
+						
 				// get headers for the file and symlink we just created
 				$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
@@ -991,7 +988,8 @@
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
 				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestValue('PHP', 'OS')))) {
-					$recom = 'Symlinks couldn\'t be created.';
+					$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec, so please download
+						the .zip package instead.';
 					$this->message('Symlinks', 'Problem', -1, $recom);
 
 				// symlink is there and header is good
