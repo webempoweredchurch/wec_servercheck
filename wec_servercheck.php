@@ -140,6 +140,7 @@
 			foreach($this->modules as $module) {
 				$this->run($module);
 			}
+			print_r($this->results);
 			
 		}
 		
@@ -418,6 +419,7 @@
 			$this->output = array();
 			$this->mc = $GLOBALS['MC'];
 			$this->check();
+			$this->evaluate();
 		}
 
 		/**
@@ -427,6 +429,15 @@
 		 **/
 		function check() {
 			die("Please override this function in your class.");
+		}
+		
+		/**
+		 * Makes a suggestion based on all the test results.
+		 *
+		 * @return void
+		 **/
+		function evaluate() {
+			//die("Please override this function in your class.");
 		}
 		
 		/**
@@ -445,39 +456,6 @@
 		 **/
 		function getOutput() {
 			return $this->output;
-		}
-
-		/**
-		 * Adds a status to the individual test. 1 means pass, 0 means warning, -1 means fail.
-		 * 
-		 * @param $name Name of the sub test. For example 'Version'.
-		 * @param $status Status integer for this sub test. 1 means pass, 0 means warning, -1 means fail.
-		 * @return void
-		 **/
-		function addStatus($name, $status) {
-			$this->output[$name]['status'] = $status;
-		}
-		
-		/**
-		 * Adds a recommendation to the individual test
-		 *
-		 * @param $name Name of the sub test, e.g. 'Version'.
-		 * @param $recom Recommendation in case this test fails or a warning appears.
-		 * @return void
-		 **/
-		function addRecommendation($name, $recom) {
-			$this->output[$name]['recommendation'] = $recom;
-		}
-		
-		/**
-		 * Adds a value to a test. This is pretty much the resulting value of the test.
-		 *
-		 * @param $name Name of the sub test, e.g. 'Version'.
-		 * @param $value Value of the test, e.g. the version number.
-		 * @return void
-		 **/
-		function addValue($name, $value) {
-			$this->output[$name]['value'] = $value;
 		}
 		
 		/**
@@ -538,7 +516,7 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class PHP extends Module {
-		
+
 		function __construct() {
 			parent::__construct();
 
@@ -553,6 +531,14 @@
 			$this->checkMemoryLimit();
 			$this->checkUploadLimit();
 			$this->checkExec();
+		}
+		
+		function evaluate() {
+			$allgood = ($this->output['Version'] && $this->output['Memory Limit'] && $this->output['Max Upload Filesize']);
+
+			if ( $allgood ) {
+				
+			}
 		}
 		
 		/**
@@ -810,13 +796,10 @@
 			
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($con != false) {
-				$this->addValue('Status', 'Running');
-				$this->addStatus('Status', 1);	
+				$this->message('Status', 'Running', 1);
 				$this->running = true;			
 			} else {
-				$this->addValue('Status', 'Error');
-				$this->addStatus('Status', -1);
-				$this->addRecommendation('Status', mysql_error());	
+				$this->message('Status', 'Running', -1, mysql_error());
 			}
 
 		}
