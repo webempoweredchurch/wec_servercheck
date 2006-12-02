@@ -77,6 +77,7 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class ModuleController {
+		
 	
 		var $modules;
 		var $results;
@@ -127,8 +128,7 @@
 				$cur = new $module;
 				$this->results[$moduleName]['tests'] = $cur->getOutput();
 				$this->results[$moduleName]['title'] = $cur->getTitle();
-				$this->results[$moduleName]['status'] = $cur->getStatus();
-				$this->results[$moduleName]['recom'] = $cur->getRecom();
+				$this->results[$moduleName]['overall'] = $cur->getOverall();
 			}
 			// print_r($this->results);
 		}
@@ -202,29 +202,139 @@
 	//-----------------------------------
 	
 	/**
-	 * Renders the output of the test results. Can be replaced to change output format.
+	 * Provides an object that just unifies all other renderers. RenderAll will simply make
+	 * a html skeleton and fill in all the other renderers' output.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class RenderAll	{
+		
+		var $output;
+		
+		/**
+		 * PHP4 compatible constructor
+		 *
+		 **/
+		function RenderAll() {
+			$this->__construct();
+		}
+		
+		/**
+		 * Constructor
+		 *
+		 **/
+		function __construct() {
+			$this->output = array();
+		}
+		
+		/**
+		 * Adds some more output to the page
+		 *
+		 * @return void
+		 **/
+		function add($output) {
+			$this->output[] = $output;
+		}
+		
+		/**
+		 * Renders all the output inside a HTML page
+		 *
+		 * @return String
+		 **/
+		function render() {
+			$show = '<html><head>';
+			$show .= $this->headers;
+			$show .= '<title>WEC Server Checker</title>';
+			$show .= '</head><body>';
+			
+			foreach( $this->output as $output ) {
+				$show .= $output;
+			}
+			
+			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
+			$show .= '<div style="width: 600px;">' . $note . '</div>';
+			$show .= '</body></head>';
+			
+			return $show;
+		}
+		
+	} // END class RenderAll
+	
+	$renderer = new RenderAll();
+	/**
+	 * Abstract class that all Renderers need to inherit from.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class Renderer {
+		
+		var $headers;
+		var $output;
+		
+		/**
+		 * PHP4 compatible constructor
+		 *
+		 **/
+		function Renderer() {
+			$this->__construct();
+		}
+		
+		/**
+		 * Constructor
+		 *
+		 **/
+		function __construct() {
+			$this->output = array();
+			$this->headers = $this->setHeaders();
+		}
+		
+		/**
+		 * Determines how a single test module is rendered.	
+		 *
+		 **/
+		function render() {
+			die("Please override the render() method in our class");
+		}
+		
+		/**
+		 * Handles the rendering of all the test modules.
+		 *
+		 **/
+		function renderAll() {
+			die("Please override the renderAl() method in our class");
+		}
+		
+		/**
+		 * Defines headers that need to go inside <head> tags. Can be
+		 * overwridden by the child class if needed.
+		 *
+		 * @return null
+		 **/
+		function setHeaders() {
+			return null;
+		}
+		
+	} // END class Renderer
+	
+	/**
+	 * Renders the detailed output of the test results. Can be replaced to change output format.
 	 *
 	 * 
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	class RenderOutput {
+	class RenderDetailed extends Renderer {
 	
 		// Table Row
 		var $ROW = '<tr><td>%s</td><td><pre>%s</pre></td><td>%s</td></tr>';
-		
-		// plain row
-		var $PROW = "%s \t\t %s \t\t %s\n";
-		
+
 		// Recommendation Rows
-		var $PRROW = "%s\n";
 		var $RROWW = '<tr class="recomrowwarn"><td colspan="3">%s</td></tr>';
 		var $RROWF = '<tr class="recomrowfail"><td colspan="3">%s</td></tr>';
 				
 		// Table title
 		var $PTITLE = "\n-= %s =-\n";
 		var $TITLE = '<th colspan="3">%s</th>';
-		
-		
+
 		/**
 		 * Renders all the modules from given results array
 		 *
@@ -232,97 +342,14 @@
 		 * @return String
 		 **/
 		function renderAll($results) {
-			$plain = null;
-			$output = '<html><head><title>WEC Server Checker</title></head><body>
-			
-			<style type="text/css">
-				.tablefield {
-					width: 230px;
-					font-weight: bold;
-					border-bottom: 1px solid black;
-				}
-				
-				th {
-					border-bottom: 1px black solid;
-				}
-				.recomrowfail td{
-					border-top: 1px solid black;
-					border-bottom: 1px solid black;
-					text-align: center;
-					font-size: 10pt;
-					background: red;
-				}
-				
-				.recomrowwarn td{
-					border-top: 1px solid black;
-					border-bottom: 1px solid black;
-					text-align: center;
-					font-size: 10pt;
-					background: orange;
-				}
-				
-				table {
-					border: 1px solid black;
-					margin-bottom: 10px;
-				}
-				
-			</style>';
-
-			
+			$output = null;
+						
 			foreach($results as $module) {
 				$output .= $this->render($module['tests'], $module['title']);
-				$output .= $this->renderComplete($module['title'], $module['status'], $module['recom']);
-				$plain .= $this->renderPlain($module['tests'], $module['title']);
+				//$output .= $this->renderComplete($module['title'], $module['status'], $module['recom']);
 			}
-			
-			
-			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
-			$output .= '<div style="width: 600px;">' . $note . '</div>';
-			
-			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
-			$output .= '<textarea cols="100" rows="20">';
-			$output .= $plain;
-			$output .= '</textarea></p>';
-			$output .= '</body></head>';
 			
 			return $output;
-		}
-		
-		/**
-		 * Renders the module results in plain text.
-		 *
-		 * @return void
-		 **/
-		function renderPlain($testData, $title) {
-			$show = sprintf($this->PTITLE, $title);
-
-			foreach($testData as $key => $value) {
-				$status = $this->getPlainStatus($value['status']);
-				$length1 = strlen($key);
-				$length2 = strlen($value['value']);
-				if($length1 < 8) {
-					$pad1 = "\t\t\t";	
-				} else if ($length1 > 14) {
-					$pad1 = "\t";	
-				} else {
-					$pad1 = "\t\t";
-				}
-				
-				if($length2 < 8) {
-					$pad2 = "\t\t\t";	
-				} else if ($length2 > 14) {
-					$pad2 = "\t";	
-				} else {
-					$pad2 = "\t\t";
-				}
-
-				$show .= $key . $pad1 . $value['value'] . $pad2 .  $status . "\n";
-				if(isset($value['recommendation'])) {
-					$show .= sprintf($this->PROW, $value['recommendation']);
-				}
-			}
-			
-			return $show;
 		}
 		
 		/**
@@ -366,23 +393,7 @@
 			$show .= $this->getStatus($status);
 			$show .= '</td></tr></table>';
 			
-			return $show;
-			
-		}
-		
-		/**
-		 * Translates the status integer codes into plain text Strings.
-		 *
-		 * @return String
-		 **/
-		function getPlainStatus($status) {
-			if($status == 1) {
-				return 'Passed!';
-			} else if ($status == 0) {
-				return 'Warning!';
-			} else if ($status == -1) {
-				return 'Failed!';
-			}
+			return $show;	
 		}
 		
 		/**
@@ -400,10 +411,143 @@
 				return '<span style="color: red;">Failed!</span>';
 			}
 		}
+		
+		/**
+		 * Defines stuff that needs to go inside the <head> tag. Is called by the constructor, so it's just
+		 * a convenient way to separately define this data.
+		 *
+		 * @return String
+		 **/
+		function setHeaders() {
+			$headers = 	'<style type="text/css">
+				.tablefield {
+					width: 230px;
+					font-weight: bold;
+					border-bottom: 1px solid black;
+				}
+
+				th {
+					border-bottom: 1px black solid;
+				}
+				.recomrowfail td{
+					border-top: 1px solid black;
+					border-bottom: 1px solid black;
+					text-align: center;
+					font-size: 10pt;
+					background: red;
+				}
+
+				.recomrowwarn td{
+					border-top: 1px solid black;
+					border-bottom: 1px solid black;
+					text-align: center;
+					font-size: 10pt;
+					background: orange;
+				}
+
+				table {
+					border: 1px solid black;
+					margin-bottom: 10px;
+				}
+
+			</style>';
+				
+			return $headers;
+		}
 	} 
 	
-	$renderer = new RenderOutput();
+	$detailed = new RenderDetailed();
 	
+	/**
+	 * Renders the output as plain text inside a textarea for easy copying and pasting.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class RenderPlain extends Renderer {
+
+		// plain row
+		var $PROW = "%s \t\t %s \t\t %s\n";
+		
+		// Recommendation Rows
+		var $PRROW = "%s\n";
+		
+		/**
+		 * Renders all the modules from given results array
+		 *
+		 * @param $results Array that contains all the data for our tests.
+		 * @return String
+		 **/
+		function renderAll($results) {
+			$plain = null;
+			$output = '<html><head><title>WEC Server Checker</title></head><body>';
+			
+			foreach($results as $module) {
+				$output .= $this->render($module['tests'], $module['title']);
+			}
+			
+			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
+			$output .= '<textarea cols="100" rows="20">';
+			$output .= $plain;
+			$output .= '</textarea></p>';
+			$output .= '</body></head>';
+			
+			return $output;
+		}
+		
+		/**
+		 * Renders the module results in plain text.
+		 *
+		 * @return void
+		 **/
+		function render($testData, $title) {
+			$show = sprintf($this->PTITLE, $title);
+
+			foreach($testData as $key => $value) {
+				$status = $this->getPlainStatus($value['status']);
+				$length1 = strlen($key);
+				$length2 = strlen($value['value']);
+				if($length1 < 8) {
+					$pad1 = "\t\t\t";	
+				} else if ($length1 > 14) {
+					$pad1 = "\t";	
+				} else {
+					$pad1 = "\t\t";
+				}
+				
+				if($length2 < 8) {
+					$pad2 = "\t\t\t";	
+				} else if ($length2 > 14) {
+					$pad2 = "\t";	
+				} else {
+					$pad2 = "\t\t";
+				}
+
+				$show .= $key . $pad1 . $value['value'] . $pad2 .  $status . "\n";
+				if(isset($value['recommendation'])) {
+					$show .= sprintf($this->PROW, $value['recommendation']);
+				}
+			}
+			
+			return $show;
+		}
+		
+		/**
+		 * Translates the status integer codes into plain text Strings.
+		 *
+		 * @return String
+		 **/
+		function getStatus($status) {
+			if($status == 1) {
+				return 'Passed!';
+			} else if ($status == 0) {
+				return 'Warning!';
+			} else if ($status == -1) {
+				return 'Failed!';
+			}
+		}
+	}
+	
+	$plain = new RenderPlain();
 	
 	//-----------------------------------
 	//|			Test Modules			|
@@ -421,8 +565,7 @@
 		var $output;
 		var $title;
 		var $mc;
-		var $status;
-		var $recom;
+		var $overall;
 
 		/**
 		 * PHP4 constructor.
@@ -440,8 +583,7 @@
 		function __construct() {
 			$this->output = array();
 			$this->mc = $GLOBALS['MC'];
-			$this->status = null;
-			$this->recom = null;
+			$this->overall = array();
 			$this->check();
 			$this->evaluate();
 		}
@@ -467,28 +609,19 @@
 		/**
 		 * Gets the title of the test.
 		 *
+		 * @return String[]
+		 **/
+		function getOverall() {
+			return $this->overall;
+		}
+		
+		/**
+		 * Get title for test set.
+		 *
 		 * @return String
 		 **/
 		function getTitle() {
 			return $this->title;
-		}
-		
-		/**
-		 * Get the status of the test set.
-		 *
-		 * @return int
-		 **/
-		function getStatus() {
-			return $this->status;
-		}
-		
-		/**
-		 * Get recommendation for test set.
-		 *
-		 * @return String
-		 **/
-		function getRecom() {
-			return $this->recom;
 		}
 		
 		/**
@@ -518,8 +651,8 @@
 		 * @return void
 		 **/
 		function all($status, $recommendation) {
-			$this->status = $status;
-			$this->recom = $recommendation;
+			$this->overall['status'] = $status;
+			$this->overall['recommendation'] = $recommendation;
 		}
 
 	   /**
@@ -1204,8 +1337,7 @@
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	 class TYPO3 extends Module {
-		
+	class TYPO3 extends Module {		
 		/**
 		 * Constructor
 		 *
@@ -1369,8 +1501,11 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	error_reporting(0);
+	//error_reporting(0);
 
 	$mc->runAll();
-	echo $renderer->renderAll($mc->getResults());
+	$results = $mc->getResults();
+	
+	$renderer->add($detailed->renderAll($results));
+	echo $renderer->render();
 ?>
