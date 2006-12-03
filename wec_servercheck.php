@@ -1,5 +1,4 @@
 <?php
-
 /***************************************************************
 * Copyright notice
 *
@@ -42,11 +41,9 @@
 	$GLOBALS['dbPass'] = '';
 	$GLOBALS['relativePath'] = '/wec/';
 	
-	// !!!! DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
-
-
-
-
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// !!!! PLEASE DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	//-----------------------------------
 	//|			Misc Options			|
@@ -77,123 +74,6 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class ModuleController {
-		
-	
-		var $modules;
-		var $results;
-	
-		/**
-		 * PHP4 constructor.
-		 **/
-		function ModuleController() {
-			$this->__construct();
-		}
-
-		/**
-		 * PHP5 constructor for this class.
-		 *
-		 **/
-		function __construct() {
-			$this->modules = array();
-			$this->results = array();
-		}
-			
-		/**
-		 * Registers all the test modules inside the controller for easy access.
-		 *
-		 * @param $module The name of the Module we want to register. Same as the class name.
-		 * @return void
-		 **/
-	 	function register($module) {
-			$this->modules[] = $module;
-		}
-		
-		/**
-		 * Returns all the registered modules.
-		 *
-		 * @return Array
-		 **/
-		function getModules() {
-			return $this->modules;
-		}
-		
-		/**
-		 * Runs the given module if it hasn't run before and saves the results in an array.
-		 *
-		 * @return void
-		 **/
-		function run($module) {
-			$moduleName = strtolower($module);
-			if(!array_key_exists($moduleName, $this->results)) {
-				$cur = new $module;
-				$this->results[$moduleName]['tests'] = $cur->getOutput();
-				$this->results[$moduleName]['title'] = $cur->getTitle();
-				$this->results[$moduleName]['overall'] = $cur->getOverall();
-			}
-			// print_r($this->results);
-		}
-		
-		/**
-		 * Runs all modules and keeps track of dependencies.
-		 *
-		 * @return void
-		 **/
-		function runAll() {
-			foreach($this->modules as $module) {
-				$this->run($module);
-			}
-		}
-		
-		/**
-		 * Returns the value for a particular test
-		 * 
-		 * @param $test The name of the main module
-		 * @param $subtest The name of the subtest, like 'Version' etc.
-		 * @return String
-		 **/
-		function getTestValue($test, $subtest) {
-		
-			// get name of the test in lower case to compare with array key
-			$testName = strtolower($test);
-			
-			// if the array key already exists, the test has already run, so just return the result.
-			// if not, run the test first.
-			if(!isset($results[$testName][$subtest])) {
-				$this->run($test);
-			}
-			return $this->results[$testName]['tests'][$subtest]['value'];
-		}
-		
-		/**
-		 * Returns the status for a particular test
-		 * 
-		 * @param $test The name of the main module
-		 * @param $subtest The name of the subtest, like 'Version' etc.
-		 * @return String
-		 **/
-		function getTestStatus($test, $subtest) {
-		
-			// get name of the test in lower case to compare with array key
-			$testName = strtolower($test);
-			
-			// if the array key already exists, the test has already run, so just return the result.
-			// if not, run the test first.
-			if(!isset($results[$testName][$subtest])) {
-				$this->run($test);
-			}
-			return $this->results[$testName]['tests'][$subtest]['status'];
-		}
-		
-		/**
-		 * Returns all the results, ususally for use in a rendering object to display them.
-		 *
-		 * @return Array
-		 **/
-		function getResults() {
-			return $this->results;
-		}
-	}
-	
 	$mc = new ModuleController();
 	$GLOBALS['MC'] = $mc;
 	
@@ -204,86 +84,6 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class RenderController	{
-		
-		var $renderers;
-		var $results;
-		
-		/**
-		 * PHP4 compatible constructor
-		 *
-		 **/
-		function RenderController() {
-			$this->__construct();
-		}
-		
-		/**
-		 * Constructor
-		 *
-		 **/
-		function __construct() {
-			$this->results = array();
-			$this->renderers = array();
-		}
-		
-		/**
-		 * Registers all the renderers inside the controller for easy access.
-		 *
-		 * @param $renderer The name of the Renderer we want to register. Same as the class name.
-		 * @return void
-		 **/
-	 	function register($renderer) {
-			// create a new object of class Renderer
-			$obj = new $renderer;
-			$this->renderers[] = $obj;
-		}
-		
-		/**
-		 * Renders all the output inside a HTML page
-		 *
-		 * @return String
-		 **/
-		function render() {
-			
-			$show = '<html><head>';
-			$show .= $this->printHeaders();
-			$show .= '<title>WEC Server Checker</title>';
-			$show .= '</head><body>';
-
-			foreach( $this->renderers as $renderer ) {
-				$show .= $renderer->renderAll($this->results);
-			}
-			
-			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
-			$show .= '<div style="width: 600px;">' . $note . '</div>';
-			$show .= '</body></head>';
-			
-			return $show;
-		}
-		
-		/**
-		 * Sets the results from all the modules.
-		 *
-		 * @return void
-		 **/
-		function setResults($results) {
-			$this->results = $results;
-		}
-		
-		/**
-		 * Prints out all the headers.
-		 *
-		 * @return String
-		 **/
-		function printHeaders() {
-			$headers = null;
-			foreach( $this->renderers as $renderer)	{
-				$headers .= $renderer->getHeaders();
-			}
-			return $headers;
-		}
-		
-	} // END class RenderController
-	
 	$rc = new RenderController();
 
 	//-----------------------------------
@@ -474,7 +274,6 @@
 			return $headers;
 		}
 	} 
-	
 	$rc->register('RenderDetailed');
 	
 	/**
@@ -568,8 +367,7 @@
 				return 'Failed!';
 			}
 		}
-	}
-	
+	}	
 	$rc->register('RenderPlain');
 	
 	/**
@@ -578,62 +376,7 @@
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	class OverallResults extends Renderer {
-		
-		/**
-		 * Renders all the modules from given results array
-		 *
-		 * @param $results Array that contains all the data for our tests.
-		 * @return String
-		 **/
-		function renderAll($results) {
-			$output = null;
-
-			foreach($results as $module) {
-				$output .= $this->render($module['title'], $module['overall']['status'], $module['overall']['recommendation']);
-			}
-
-			return $output;
-		}
-
-
-		/**
-		 * Renders the status and recommendation for a module.
-		 *
-		 * @return void
-		 **/
-		function render($title, $status, $recom) {
-			$show = '<table>';
-			$show .= '<tr><td>';
-			$show .= $title;
-			$show .= '</td><td>';
-			$show .= '</td><td>';
-			$show .= $recom;
-			$show .= '</td><td>';
-			$show .= $this->getStatus($status);
-			$show .= '</td></tr></table>';
-			
-			return $show;	
-		}
-		
-		/**
-		 * Translate the status integer codes into a String or even image to display.
-		 *
-		 * @param $status Integer value of the status.
-		 * @return String
-		 **/
-		function getStatus($status) {
-			if($status == 1) {
-				return '<span style="color: green;">Passed!</span>';
-			} else if ($status == 0) {
-				return '<span style="color: orange;">Warning!</span>';
-			} else if ($status == -1) {
-				return '<span style="color: red;">Failed!</span>';
-			}
-		}
-		
-	} // END class OverallResults
-	
+	class OverallResults extends Renderer {	
 	$rc->register('OverallResults');
 	
 	//-----------------------------------
@@ -781,7 +524,6 @@
 			}
 		}
 	}
-	
 	
 	/**
 	 * Does some basic PHP checks.
@@ -994,7 +736,6 @@
 	}
 	$mc->register('PHP');
 	
-	
 	/**
 	 * Does some basic MySQL checks.
 	 *
@@ -1122,7 +863,6 @@
 		}
 	}
 	$mc->register('MySQL');
-	
 	
 	/**
 	 * Checks file permissions
@@ -1277,7 +1017,6 @@
 	}
 	$mc->register('FilePermissions');
 	
-	
 	/**
 	 * This class tests the apache environment for mod_rewrite and .htaccess stuff.
 	 *
@@ -1418,7 +1157,6 @@
 		}
 	}
 	$mc->register('Apache');
-	
 	
 	/**
 	 * Specific TYPO3 tests, like checking permissions in various folders and whether default configuration
@@ -1583,7 +1321,6 @@
 		}
 	}
 	$mc->register('TYPO3');
-	
 	
 	//-----------------------------------
 	//|			Nitty Gritty			|
