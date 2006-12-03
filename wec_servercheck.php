@@ -196,26 +196,23 @@
 	
 	$mc = new ModuleController();
 	$GLOBALS['MC'] = $mc;
-
-	//-----------------------------------
-	//|			Output Renderers		|
-	//-----------------------------------
 	
 	/**
-	 * Provides an object that just unifies all other renderers. RenderAll will simply make
-	 * a html skeleton and fill in all the other renderers' output.
+	 * Provides an object that just controls all other renderers. RenderController will simply 
+	 * pull together the Renderers and Modules and present the output to the user.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
-	class RenderAll	{
+	class RenderController	{
 		
-		var $output;
+		var $renderers;
+		var $results;
 		
 		/**
 		 * PHP4 compatible constructor
 		 *
 		 **/
-		function RenderAll() {
+		function RenderController() {
 			$this->__construct();
 		}
 		
@@ -224,16 +221,20 @@
 		 *
 		 **/
 		function __construct() {
-			$this->output = array();
+			$this->results = array();
+			$this->renderers = array();
 		}
 		
 		/**
-		 * Adds some more output to the page
+		 * Registers all the renderers inside the controller for easy access.
 		 *
+		 * @param $renderer The name of the Renderer we want to register. Same as the class name.
 		 * @return void
 		 **/
-		function add($output) {
-			$this->output[] = $output;
+	 	function register($renderer) {
+			// create a new object of class Renderer
+			$obj = new $renderer;
+			$this->renderers[] = $obj;
 		}
 		
 		/**
@@ -242,13 +243,14 @@
 		 * @return String
 		 **/
 		function render() {
+			
 			$show = '<html><head>';
-			$show .= $this->headers;
+			$show .= $this->printHeaders();
 			$show .= '<title>WEC Server Checker</title>';
 			$show .= '</head><body>';
-			
-			foreach( $this->output as $output ) {
-				$show .= $output;
+
+			foreach( $this->renderers as $renderer ) {
+				$show .= $renderer->renderAll($this->results);
 			}
 			
 			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
@@ -258,9 +260,36 @@
 			return $show;
 		}
 		
-	} // END class RenderAll
+		/**
+		 * Sets the results from all the tests.
+		 *
+		 * @return void
+		 **/
+		function setResults($results) {
+			$this->results = $results;
+		}
+		
+		/**
+		 * Prints out all the headers.
+		 *
+		 * @return String
+		 **/
+		function printHeaders() {
+			$headers = null;
+			foreach( $this->renderers as $renderer)	{
+				$headers .= $renderer->getHeaders();
+			}
+			return $headers;
+		}
+		
+	} // END class RenderController
 	
-	$renderer = new RenderAll();
+	$rc = new RenderController();
+
+	//-----------------------------------
+	//|			Output Renderers		|
+	//-----------------------------------
+	
 	/**
 	 * Abstract class that all Renderers need to inherit from.
 	 *
@@ -311,7 +340,17 @@
 		 * @return null
 		 **/
 		function setHeaders() {
+
 			return null;
+		}
+		
+		/**
+		 * Returns the headers for this renderer.  			
+		 *
+		 * @return String
+		 **/
+		function getHeaders() {
+			return $this->headers;
 		}
 		
 	} // END class Renderer
@@ -332,7 +371,6 @@
 		var $RROWF = '<tr class="recomrowfail"><td colspan="3">%s</td></tr>';
 				
 		// Table title
-		var $PTITLE = "\n-= %s =-\n";
 		var $TITLE = '<th colspan="3">%s</th>';
 
 		/**
@@ -456,7 +494,7 @@
 		}
 	} 
 	
-	$detailed = new RenderDetailed();
+	$rc->register('RenderDetailed');
 	
 	/**
 	 * Renders the output as plain text inside a textarea for easy copying and pasting.
@@ -470,6 +508,9 @@
 		
 		// Recommendation Rows
 		var $PRROW = "%s\n";
+
+		// title
+		var $PTITLE = "\n-= %s =-\n";
 		
 		/**
 		 * Renders all the modules from given results array
@@ -478,18 +519,18 @@
 		 * @return String
 		 **/
 		function renderAll($results) {
+			
 			$plain = null;
-			$output = '<html><head><title>WEC Server Checker</title></head><body>';
+			$output = null;
 			
 			foreach($results as $module) {
-				$output .= $this->render($module['tests'], $module['title']);
+				$plain .= $this->render($module['tests'], $module['title']);
 			}
 			
 			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
 			$output .= '<textarea cols="100" rows="20">';
 			$output .= $plain;
 			$output .= '</textarea></p>';
-			$output .= '</body></head>';
 			
 			return $output;
 		}
@@ -503,7 +544,7 @@
 			$show = sprintf($this->PTITLE, $title);
 
 			foreach($testData as $key => $value) {
-				$status = $this->getPlainStatus($value['status']);
+				$status = $this->getStatus($value['status']);
 				$length1 = strlen($key);
 				$length2 = strlen($value['value']);
 				if($length1 < 8) {
@@ -523,8 +564,9 @@
 				}
 
 				$show .= $key . $pad1 . $value['value'] . $pad2 .  $status . "\n";
+
 				if(isset($value['recommendation'])) {
-					$show .= sprintf($this->PROW, $value['recommendation']);
+					$show .= sprintf($this->PRROW, $value['recommendation']);
 				}
 			}
 			
@@ -547,7 +589,7 @@
 		}
 	}
 	
-	$plain = new RenderPlain();
+	$rc->register('RenderPlain');
 	
 	//-----------------------------------
 	//|			Test Modules			|
@@ -871,7 +913,9 @@
 		 * @return int
 		 **/
 		function returnBytes($val) {
-		   	$val = trim($val);
+			if(empty($val)) return 0;
+			
+			$val = trim($val);
 		   	$last = strtolower($val{strlen($val)-1});
 		
 		   	switch($last) {
@@ -1501,11 +1545,14 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	//error_reporting(0);
+	error_reporting(0);
 
+	// run all the tests
 	$mc->runAll();
-	$results = $mc->getResults();
-	
-	$renderer->add($detailed->renderAll($results));
-	echo $renderer->render();
+
+	// pass the results to the render controller
+	$rc->setResults($mc->getResults());
+
+	// now render everything
+	echo $rc->render();
 ?>
