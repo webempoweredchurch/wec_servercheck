@@ -261,7 +261,7 @@
 		}
 		
 		/**
-		 * Sets the results from all the tests.
+		 * Sets the results from all the modules.
 		 *
 		 * @return void
 		 **/
@@ -598,7 +598,7 @@
 
 
 		/**
-		 * Renders the status and recommendation for the complete test set.
+		 * Renders the status and recommendation for a module.
 		 *
 		 * @return void
 		 **/
@@ -703,7 +703,7 @@
 		}
 		
 		/**
-		 * Get title for test set.
+		 * Get title for module.
 		 *
 		 * @return String
 		 **/
@@ -732,7 +732,7 @@
 		}
 		
 		/**
-		 * Similar to message, except it works on a whole set of tests and thus
+		 * Similar to message, except it works on a whole module and thus
 		 * writes to different segements of the array.
 		 *
 		 * @return void
