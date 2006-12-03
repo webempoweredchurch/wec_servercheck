@@ -330,7 +330,7 @@
 		 *
 		 **/
 		function renderAll() {
-			die("Please override the renderAl() method in our class");
+			die("Please override the renderAll() method in our class");
 		}
 		
 		/**
@@ -413,25 +413,6 @@
 			$show .= '</table>';
 			
 			return $show;
-		}
-		
-		/**
-		 * Renders the status and recommendation for the complete test set.
-		 *
-		 * @return void
-		 **/
-		function renderComplete($title, $status, $recom) {
-			$show = '<table>';
-			$show .= '<tr><td>';
-			$show .= $title;
-			$show .= '</td><td>';
-			$show .= '</td><td>';
-			$show .= $recom;
-			$show .= '</td><td>';
-			$show .= $this->getStatus($status);
-			$show .= '</td></tr></table>';
-			
-			return $show;	
 		}
 		
 		/**
@@ -590,6 +571,70 @@
 	}
 	
 	$rc->register('RenderPlain');
+	
+	/**
+	 * Shows just one result for each Module, making it easier for non-technical users to
+	 * get the gist of what is going on without sensory overload.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class OverallResults extends Renderer {
+		
+		/**
+		 * Renders all the modules from given results array
+		 *
+		 * @param $results Array that contains all the data for our tests.
+		 * @return String
+		 **/
+		function renderAll($results) {
+			$output = null;
+
+			foreach($results as $module) {
+				$output .= $this->render($module['title'], $module['overall']['status'], $module['overall']['recommendation']);
+			}
+
+			return $output;
+		}
+
+
+		/**
+		 * Renders the status and recommendation for the complete test set.
+		 *
+		 * @return void
+		 **/
+		function render($title, $status, $recom) {
+			$show = '<table>';
+			$show .= '<tr><td>';
+			$show .= $title;
+			$show .= '</td><td>';
+			$show .= '</td><td>';
+			$show .= $recom;
+			$show .= '</td><td>';
+			$show .= $this->getStatus($status);
+			$show .= '</td></tr></table>';
+			
+			return $show;	
+		}
+		
+		/**
+		 * Translate the status integer codes into a String or even image to display.
+		 *
+		 * @param $status Integer value of the status.
+		 * @return String
+		 **/
+		function getStatus($status) {
+			if($status == 1) {
+				return '<span style="color: green;">Passed!</span>';
+			} else if ($status == 0) {
+				return '<span style="color: orange;">Warning!</span>';
+			} else if ($status == -1) {
+				return '<span style="color: red;">Failed!</span>';
+			}
+		}
+		
+	} // END class OverallResults
+	
+	$rc->register('OverallResults');
 	
 	//-----------------------------------
 	//|			Test Modules			|
