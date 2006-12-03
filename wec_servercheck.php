@@ -984,7 +984,6 @@
 	}
 	$mc->register('PHP');
 	
-	
 	/**
 	 * Does some basic MySQL checks.
 	 *
