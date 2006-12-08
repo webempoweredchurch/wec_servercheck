@@ -102,7 +102,8 @@
 		 * @return void
 		 **/
 	 	function register($module) {
-			$this->modules[] = $module;
+			$cur = new $module;
+			$this->modules[$cur->getTitle()] = $cur;
 		}
 		
 		/**
@@ -115,70 +116,51 @@
 		}
 		
 		/**
-		 * Runs the given module if it hasn't run before and saves the results in an array.
-		 *
-		 * @return void
-		 **/
-		function run($module) {
-			$moduleName = strtolower($module);
-			if(!array_key_exists($moduleName, $this->results)) {
-				$cur = new $module;
-				$this->results[$moduleName]['tests'] = $cur->getOutput();
-				$this->results[$moduleName]['title'] = $cur->getTitle();
-				$this->results[$moduleName]['overall'] = $cur->getOverall();
-			}
-			// print_r($this->results);
-		}
-		
-		/**
 		 * Runs all modules and keeps track of dependencies.
 		 *
 		 * @return void
 		 **/
 		function runAll() {
 			foreach($this->modules as $module) {
-				$this->run($module);
+				$module->run();
+				$this->results[$module->getTitle()] = $module->getResults();
 			}
 		}
 		
 		/**
 		 * Returns the value for a particular test
 		 * 
-		 * @param $test The name of the main module
+		 * @param $test The title of the module
 		 * @param $subtest The name of the subtest, like 'Version' etc.
 		 * @return String
 		 **/
 		function getTestValue($test, $subtest) {
 		
-			// get name of the test in lower case to compare with array key
-			$testName = strtolower($test);
-			
-			// if the array key already exists, the test has already run, so just return the result.
-			// if not, run the test first.
-			if(!isset($results[$testName][$subtest])) {
-				$this->run($test);
+			// check if test has already run and run it if not.
+			if(!$this->modules[$test]->hasRun()) {
+				$this->modules[$test]->run();
 			}
-			return $this->results[$testName]['tests'][$subtest]['value'];
+			$modResults = $this->results[$test]->getTests();
+			
+			return $modResults[$subtest]['value'];
 		}
 		
 		/**
 		 * Returns the status for a particular test
 		 * 
-		 * @param $test The name of the main module
+		 * @param $test The title of the module
 		 * @param $subtest The name of the subtest, like 'Version' etc.
 		 * @return String
 		 **/
 		function getTestStatus($test, $subtest) {
 		
-			// get name of the test in lower case to compare with array key
-			$testName = strtolower($test);
-			
-			// if the array key already exists, the test has already run, so just return the result.
-			// if not, run the test first.
-			if(!isset($results[$testName][$subtest])) {
-				$this->run($test);
+			// check if test has already run and run it if not.
+			if(!$this->modules[$test]->hasRun()) {
+				$this->modules[$test]->run();
 			}
-			return $this->results[$testName]['tests'][$subtest]['status'];
+			$modResults = $this->results[$test]->getTests();
+			
+			return $modResults[$subtest]['status'];
 		}
 		
 		/**
@@ -376,10 +358,8 @@
 		 **/
 		function renderAll($results) {
 			$output = null;
-						
-			foreach($results as $module) {
-				$output .= $this->render($module['tests'], $module['title']);
-				//$output .= $this->renderComplete($module['title'], $module['status'], $module['recom']);
+			foreach($results as $title => $resultsObj) {
+				$output .= $this->render($resultsObj->getTests(), $title);
 			}
 			
 			return $output;
@@ -498,8 +478,8 @@
 			$plain = null;
 			$output = null;
 			
-			foreach($results as $module) {
-				$plain .= $this->render($module['tests'], $module['title']);
+			foreach($results as $title => $resultsObj) {
+				$plain .= $this->render($resultsObj->getTests(), $title);
 			}
 			
 			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
@@ -583,7 +563,7 @@
 			$output = null;
 
 			foreach($results as $module) {
-				$output .= $this->render($module['title'], $module['overall']['status'], $module['overall']['recommendation']);
+				//$output .= $this->render($module['title'], $module['overall']['status'], $module['overall']['recommendation']);
 			}
 
 			return $output;
@@ -600,10 +580,12 @@
 			$show .= '<tr><td>';
 			$show .= $title;
 			$show .= '</td><td>';
-			$show .= '</td><td>';
-			$show .= $recom;
-			$show .= '</td><td>';
 			$show .= $this->getStatus($status);
+			$show .= '</td></tr>';
+			$show .= '<tr><td colspan="2">';
+			$show .= $recom;
+			$show .= '</td></tr>';
+			
 			$show .= '</td></tr></table>';
 			
 			return $show;	
@@ -633,6 +615,74 @@
 	//-----------------------------------
 	
 	/**
+	 * Defines the results for one test module.
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class Results {
+		var $overall;
+		var $testResults;
+		
+		/**
+		 * PHP4 compatible constructor
+		 *
+		 **/
+		function Results() {
+			$this->__construct();
+		}
+		
+		/**
+		 * Constructor
+		 *
+		 **/
+		function __construct() {
+			$this->overall = array();
+			$this->testResults = array();
+		}
+		
+		/**
+		 * Fills in the result array.
+		 *
+		 * @return void
+		 **/
+		function test($name, $value, $status, $recommendation = null) {
+			$this->testResults[$name]['value'] = $value;
+			$this->testResults[$name]['status'] = $status;
+			(empty($recommendation)) ? null : $this->testResults[$name]['recommendation'] = $recommendation;
+		}
+		
+		/**
+		 * Similar to message, except it works on a whole module and thus
+		 * writes to different segements of the array.
+		 *
+		 * @return void
+		 **/
+		function overall($status, $recommendation) {
+			$this->overall['status'] = $status;
+			$this->overall['recommendation'] = $recommendation;
+		}
+		
+		/**
+		 * Gets the title of the test.
+		 *
+		 * @return String[]
+		 **/
+		function getOverall() {
+			return $this->overall;
+		}
+		
+		/**
+		 * Returns the test result array
+		 *
+		 * @return Array
+		 **/
+		function getTests() {
+			return $this->testResults;
+		}
+		
+	} // END class Result
+
+	/**
 	 * Abstract class Module, blueprint for test modules.
 	 *
 	 * 
@@ -640,10 +690,10 @@
 	 **/
 	class Module {
 
-		var $output;
+		var $results;
 		var $title;
 		var $mc;
-		var $overall;
+		var $hasRun;
 
 		/**
 		 * PHP4 constructor.
@@ -659,11 +709,9 @@
 		 *
 		 **/
 		function __construct() {
-			$this->output = array();
-			$this->mc = $GLOBALS['MC'];
-			$this->overall = array();
-			$this->check();
-			$this->evaluate();
+			$this->results = new Results();
+			$this->mc = &$GLOBALS['MC'];
+			$this->hasRun = false;
 		}
 
 		/**
@@ -685,15 +733,6 @@
 		}
 		
 		/**
-		 * Gets the title of the test.
-		 *
-		 * @return String[]
-		 **/
-		function getOverall() {
-			return $this->overall;
-		}
-		
-		/**
 		 * Get title for module.
 		 *
 		 * @return String
@@ -703,34 +742,34 @@
 		}
 		
 		/**
-		 * Returns the output generated by this test.
+		 * Returns the Results object of this test.
 		 *
 		 * @return Array
 		 **/
-		function getOutput() {
-			return $this->output;
+		function getResults() {
+			return $this->results;
 		}
 		
 		/**
-		 * Fills in the result array.
+		 * Checks whether the test has already run.
 		 *
-		 * @return void
+		 * @return boolean
 		 **/
-		function message($name, $value, $status, $recommendation = null) {
-			$this->output[$name]['value'] = $value;
-			$this->output[$name]['status'] = $status;
-			(empty($recommendation)) ? null : $this->output[$name]['recommendation'] = $recommendation;
+		function hasRun() {
+			return $this->hasRun;
 		}
 		
 		/**
-		 * Similar to message, except it works on a whole module and thus
-		 * writes to different segements of the array.
+		 * Runs the given module if it hasn't run before and saves the results in an array.
 		 *
 		 * @return void
 		 **/
-		function all($status, $recommendation) {
-			$this->overall['status'] = $status;
-			$this->overall['recommendation'] = $recommendation;
+		function run() {
+			if(!$this->hasRun) {
+				$this->check();
+				$this->evaluate();
+				$this->hasRun = true;
+			}
 		}
 
 	   /**
@@ -739,7 +778,7 @@
 	   * @param int $format
 	   * @desc Fetches all the headers
 	   **/
-	   function getHeaders($url,$format=0) {
+	   	function getHeaders($url,$format=0) {
 
 			$url_info=parse_url($url);
 			$port = isset($url_info['port']) ? $url_info['port'] : 80;
@@ -797,20 +836,20 @@
 		}
 		
 		function evaluate() {
-			$allgood = ($this->output['Version']['status'] == 1
-				&& $this->output['Memory Limit']['status'] == 1
-				&& $this->output['Max Upload Filesize']['status'] == 1
-				&& $this->output['Required Functions']['status'] == 1);
-			$nomem = ($this->output['Version']['status'] == 1
-				&& $this->output['Memory Limit']['status'] != 1 
-				&& $this->output['Max Upload Filesize']['status'] == 1
-				&& $this->output['Required Functions']['status'] == 1);
-
-			if ( $allgood ) {
-				$this->all(1, 'All is peachy!');
-			} elseif ( $nomem ) {
-				$this->all(-1, ':( not peachy');
-			}
+			// $allgood = ($this->output['Version']['status'] == 1
+			// 	&& $this->output['Memory Limit']['status'] == 1
+			// 	&& $this->output['Max Upload Filesize']['status'] == 1
+			// 	&& $this->output['Required Functions']['status'] == 1);
+			// $configError = ($this->output['Version']['status'] == 1
+			// 	|| $this->output['Memory Limit']['status'] != 1 
+			// 	|| $this->output['Max Upload Filesize']['status'] != 1
+			// 	|| $this->output['Required Functions']['status'] != 1);
+			// 
+			// if ( $allgood ) {
+			// 	$this->all(1, 'All is peachy!');
+			// } elseif ( $configError ) {
+			// 	$this->all(-1, 'You have the right PHP version, but there was a configuration error:');
+			// }
 		}
 		
 		/**
@@ -829,9 +868,9 @@
 			
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
 			if($majorVersion == 4 || $majorVersion == 5) {
-				$this->message('Version', $version, 1);
+				$this->results->test('Version', $version, 1);
 			} else {
-				$this->message('Version',$version, -1, "PHP Version is too low!");				
+				$this->results->test('Version',$version, -1, "PHP Version is too low!");				
 			}
 		}
 		
@@ -847,9 +886,9 @@
 					
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
 			if($api == 'cgi' || $api == 'apache' || $api == 'apache2handler') {
-				$this->message('Server API', $api, 1);
+				$this->results->test('Server API', $api, 1);
 			} else {
-				$this->message('Server API', $api, 0, 'Unknown Server API');
+				$this->results->test('Server API', $api, 0, 'Unknown Server API');
 			}
 		}
 		
@@ -865,9 +904,9 @@
 			
 			// these three OS are known, display warning if an unknown one is shown.
 			if($os == 'FreeBSD' || $os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
-				$this->message('OS', $os, 1);
+				$this->results->test('OS', $os, 1);
 			} else {
-				$this->message('OS', $os, 0, 'Unknown Operating System');
+				$this->results->test('OS', $os, 0, 'Unknown Operating System');
 			}
 		}
 		
@@ -891,11 +930,11 @@
 			
 			// if ours is more than recommended...
 			if($mlimitBytes >= $glimitBytes) {
-				$this->message('Memory Limit', $mlimit, 1);
+				$this->results->test('Memory Limit', $mlimit, 1);
 				
 			// else if no memory limit in place, so that's good, too...
 			} else if (empty($mlimit)) {
-				$this->message('Memory Limit', "No memory limit in effect!", 1);
+				$this->results->test('Memory Limit', "No memory limit in effect!", 1);
 
 			// else it's too low :()
 			} else {
@@ -903,7 +942,7 @@
 					TYPO3 root directory:<br />php_value memory_limit 8M<br />
 					If that doesn\'t work and you have access to your php.ini, please set it to at least 32M or ask your
 					host to do so if you don\'t have access to it.';
-				$this->message('Memory Limit', $mlimit, -1, $recom);
+				$this->results->test('Memory Limit', $mlimit, -1, $recom);
 			}
 			
 		}
@@ -931,13 +970,13 @@
 			// else if lower than min, fail.
 			// else it could still be okay, warning.
 			if($bytes >= $gbytes) {
-				$this->message("Max Upload Filesize", $ulimit, 1);
+				$this->results->test("Max Upload Filesize", $ulimit, 1);
 			} else if ($bytes < $bbytes) {
 				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise it to at least 10M.';
-				$this->message("Max Upload Filesize", $ulimit, -1, $recom);
+				$this->results->test("Max Upload Filesize", $ulimit, -1, $recom);
 			} else {
 				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising it to 10M.';
-				$this->message("Max Upload Filesize", $ulimit, 0, $recom);
+				$this->results->test("Max Upload Filesize", $ulimit, 0, $recom);
 			}
 			
 		}
@@ -974,11 +1013,11 @@
 		function checkFunctions() {
 			exec('ls -al', $output);
 			if($output) {
-				$this->message('Required Functions', 'success', 1);
+				$this->results->test('Required Functions', 'success', 1);
 			} else {
 				$recom = 'Could not use exec() on this server. Please check with your host and make sure that the
 					use of exec() is allowed.';
-				$this->message('Required Functions', 'failed', -1, $recom);
+				$this->results->test('Required Functions', 'failed', -1, $recom);
 			}
 		}
 	}
@@ -1021,7 +1060,7 @@
 		 **/
 		function checkHost() {
 			$host = mysql_get_host_info();
-			$this->message('Host Info', $host, 1);
+			$this->results->test('Host Info', $host, 1);
 		}
 		
 		
@@ -1032,7 +1071,7 @@
 		 **/
 		function checkClient() {
 			$version = mysql_get_client_info();
-			$this->message('Client Version', $version, 1);
+			$this->results->test('Client Version', $version, 1);
 		}
 		
 		
@@ -1054,9 +1093,9 @@
 
 			// if it's MySQL 4 or 5, we should be good, otherwise display error.
 			if($majorVersion == 4 || $majorVersion == 5 || ($majorVersion == 3 && $minorVersion >= 23)) {
-				$this->message('Server Version', $version, 1);
+				$this->results->test('Server Version', $version, 1);
 			} else {
-				$this->message('Server Version', $version, -1, "MySQL Version is not compatible!");
+				$this->results->test('Server Version', $version, -1, "MySQL Version is not compatible!");
 			}				
 		}
 		
@@ -1069,10 +1108,10 @@
 			
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($con != false) {
-				$this->message('Status', 'Running', 1);
+				$this->results->test('Status', 'Running', 1);
 				$this->running = true;			
 			} else {
-				$this->message('Status', 'Running', -1, mysql_error());
+				$this->results->test('Status', 'Running', -1, mysql_error());
 			}
 
 		}
@@ -1085,10 +1124,10 @@
 		function checkNormalConnection() {
 			$link = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($link) {
-				$this->message('Non-persistent connection', 'Success', 1);
+				$this->results->test('Non-persistent connection', 'Success', 1);
 			} else {
 				$recom = 'For some reason a normal connection to the MySQL database cannot be established.';
-				$this->message('Non-persistent connection', 'Failed', -1, $recom);
+				$this->results->test('Non-persistent connection', 'Failed', -1, $recom);
 			}
 			mysql_close($link);
 		}
@@ -1101,11 +1140,11 @@
 		function checkPersistentConnection() {
 			$link = mysql_pconnect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($link) {
-				$this->message('Persistent connection', 'Success', 1);
+				$this->results->test('Persistent connection', 'Success', 1);
 			} else {
 				$recom = 'Your setup doesn\'t allow persistent connections. In the Install Tool, make
 					sure you configure TYPO3 to not	use persistent connections.';
-				$this->message('Persistent connection', 'Failed', 0, $recom);
+				$this->results->test('Persistent connection', 'Failed', 0, $recom);
 			}
 			mysql_close($link);
 		}
@@ -1161,7 +1200,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder; check permissions.');
+					$this->results->test('Minimum write permissions', "N/A", -1, 'Could not create temporary folder; check permissions.');
 					return;
 				}
 				
@@ -1171,7 +1210,7 @@
 				// if write was successful, save the file permissions in the results. It will 
 				// overwrite this until one of them doesn't work, and leave it at the minimum
 				// that did work which is exactly what we want.
-				if($test) $this->message('Minimum write permissions', $perm, 1);
+				if($test) $this->results->test('Minimum write permissions', $perm, 1);
 
 				// remove the temporary file and folder
 				unlink('tmp/test.php');
@@ -1207,7 +1246,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->message('Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
+					$this->results->test('Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
 					return;
 				}
 
@@ -1229,31 +1268,31 @@
 
 				// check for good headers from file, if they are, output, if not, it's bad!
 				if(strpos($headers[0], "200 OK") !== false) {
-					$this->message('Minimum read permissions', $perm, 1);
+					$this->results->test('Minimum read permissions', $perm, 1);
 				} else {
-					$this->message('Minimum read permissions', $perm, -1, "Reading file failed.");
+					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed.");
 				}
 
 
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
-				if(!$sym && strpos('win', strtolower($this->mc->getTestValue('PHP', 'OS')))) {
+				if(!$sym && strpos('win', strtolower($this->mc->getTestValue('PHP Info', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
-					$this->message('Symlinks', 'Problem', 0, $recom);
+					$this->results->test('Symlinks', 'Problem', 0, $recom);
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestValue('PHP', 'OS')))) {
+				} else if(!$sym && !strpos('win', strtolower($this->mc->getTestValue('PHP Info', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec, so please download
 						the .zip package instead.';
-					$this->message('Symlinks', 'Problem', -1, $recom);
+					$this->results->test('Symlinks', 'Problem', -1, $recom);
 
 				// symlink is there and header is good
 				} else if ($sym && strpos($sHeaders[0], "200 OK") !== false) {
-					$this->message('Symlinks', 'success', 1);
+					$this->results->test('Symlinks', 'success', 1);
 				
 				// symlink is there but couldn't be read
 				} else {
-					$this->message('Symlinks', 'Problem', -1, "Reading symlink failed.");
+					$this->results->test('Symlinks', 'Problem', -1, "Reading symlink failed.");
 				}
 				
 				// remove the temporary file and folder
@@ -1301,19 +1340,19 @@
 
 				// if we find mod_rewrite, all is good.
 				if(in_array('mod_rewrite', apache_get_modules())) {
-					$this->message('mod_rewrite', 'present', 1);				
+					$this->results->test('mod_rewrite', 'present', 1);				
 		
 				// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-				} else if($this->mc->getTestValue('PHP', 'Server API') == 'apache' || $this->mc->getTestValue('PHP', 'Server API') == 'apache2handler'){
+				} else if($this->mc->getTestValue('PHP Info', 'Server API') == 'apache' || $this->mc->getTestValue('PHP Info', 'Server API') == 'apache2handler'){
 					$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
 						having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
-					$this->message('mod_rewrite', 'not found', -1, $recom);	
+					$this->results->test('mod_rewrite', 'not found', -1, $recom);	
 			
 				// if we don't find it, and the server api is not apache, we can't really say whether it's there or not.
 				} else {
 					$recom = 'mod_rewrite could not be found, but that is because PHP is not running under Apache, which 
 						is perfectly fine. Check to make sure that the \' Rewrite \' test was successful.';
-					$this->message('mod_rewrite', 'not found', 0, $recom);	
+					$this->results->test('mod_rewrite', 'not found', 0, $recom);	
 				}
 			}
 		}
@@ -1333,9 +1372,9 @@
 					if(empty($version)) {
 						$recom = 'Apache version couldn\'t be determined, probably because Apache is configured not
 							to display its version information. This is usually okay.';
-						$this->message('Version', 'not found', 0, $recom);
+						$this->results->test('Version', 'not found', 0, $recom);
 					} else {
-                    	$this->message('Version', $version, 1);
+                    	$this->results->test('Version', $version, 1);
 					}
                 }
             }
@@ -1349,7 +1388,7 @@
 		function checkHtaccess() {
 			
 			// get minimum file permissions from earlier test
-			$perms = $this->mc->getTestValue('FilePermissions', 'Minimum write permissions');
+			$perms = $this->mc->getTestValue('File Permissions', 'Minimum write permissions');
 			
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
@@ -1382,14 +1421,14 @@
 			
 			// if we get a 200 OK and the headers are the same, it worked!
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
-				$this->message('Rewrite URLs', 'success', 1);
+				$this->results->test('Rewrite URLs', 'success', 1);
 			
 			// if we get a 404 not found on the virtual file and mod_rewrite was there, overriding with .htaccess
 			// is probably not allowed.
 			} else if(strpos(strtolower($vheaders[0]), '404 not found') !== false && $this->output['mod_rewrite']['status'] == 1) {
 				$recom = "Rewriting URLs failed. Your host doesn't allow overriding settings with .htaccess files.
 					Make sure that 'AllowOverride All' is set for your virtual host in your Apache config.";
-				$this->message('Rewrite URLs', 'Failed', -1, $recom);
+				$this->results->test('Rewrite URLs', 'Failed', -1, $recom);
 			}
 			// implicit here is that if the mod_rewrite test failed, rewriting obviously cannot work, so we don't show
 			// any results since the user should already know that it won't work.
@@ -1452,9 +1491,9 @@
 			if($output[1] == 'http://demo.webempoweredchurch.org/') {
 				$recom = 'The base tag is still at its default value and needs to be changed
 					to the address of your TYPO3 installation.';
-				$this->message('Base Tag', $output[1], -1, $recom);
+				$this->results->test('Base Tag', $output[1], -1, $recom);
 			} else {
-				$this->message('Base Tag', $output[1], 1);				
+				$this->results->test('Base Tag', $output[1], 1);				
 			}
 		}
 		
@@ -1465,11 +1504,11 @@
 		 **/
 		function checkHtaccess() {
 			if(file_exists($GLOBALS['TYPO3Path'] . '.htaccess' )) {
-				$this->message('.htaccess file', 'found', 1);
+				$this->results->test('.htaccess file', 'found', 1);
 			} else {
 				$recom = 'The .htaccess file could not be found in your TYPO3 root directory. Please make sure
 					you copied it correctly from the WEC Starter Package to your web host.';
-				$this->message('.htaccess file', 'not found', -1, $recom);
+				$this->results->test('.htaccess file', 'not found', -1, $recom);
 			}
 		}
 		
@@ -1499,28 +1538,28 @@
 			// if we get a 200 OK and the headers are the same plus the content of both pages is
 			// identical, it worked
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm == $rewr) {
-				$this->message('RealURL', 'success', 1);
+				$this->results->test('RealURL', 'success', 1);
 			
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
-				$this->message('RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
+				$this->results->test('RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
 			
 			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
 			// stuff is not in this .htaccess file.
 			} else if($this->mc->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == 1){
 				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
 					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
-				$this->message('RealURL', 'Failed', -1, $recom);
+				$this->results->test('RealURL', 'Failed', -1, $recom);
 			
 			// if the general rewriting worked but .htaccess is missing, it obviously won't work.
 			} else if ($this->mc->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
 				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
 					copied it from the WEC Starter Package to your TYPO3 root directory.";
-				$this->message('RealURL', 'Failed', -1, $recom);
+				$this->results->test('RealURL', 'Failed', -1, $recom);
 		
 			// just a fail safe.
 			} else {
-				$this->message('RealURL', 'Failed', -1, 'Unknown error.');
+				$this->results->test('RealURL', 'Failed', -1, 'Unknown error.');
 			}
 		}
 		
@@ -1548,7 +1587,7 @@
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the ' . $directory . ' directory.';
-				$this->message($directory, 'not writable', $status, $recom);
+				$this->results->test($directory, 'not writable', $status, $recom);
 				return null;
 			}
 			
@@ -1557,10 +1596,10 @@
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
-				$this->message($directory, 'readable and writable', 1);
+				$this->results->test($directory, 'readable and writable', 1);
 			} else {
 				$recom = 'File couldn\'t be read, check file permissions.';
-				$this->message($directory, 'Could not access file over HTTP.', 0, $recom);
+				$this->results->test($directory, 'Could not access file over HTTP.', 0, $recom);
 			}
 			
 			unlink($path . 'test.php');
@@ -1574,7 +1613,7 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	error_reporting(0);
+	//error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
