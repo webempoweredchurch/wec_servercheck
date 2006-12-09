@@ -561,9 +561,9 @@
 		 **/
 		function renderAll($results) {
 			$output = null;
-
-			foreach($results as $module) {
-				//$output .= $this->render($module['title'], $module['overall']['status'], $module['overall']['recommendation']);
+			
+			foreach($results as $title => $resultsObj) {
+				$output .= $this->render($title, $resultsObj);
 			}
 
 			return $output;
@@ -575,7 +575,17 @@
 		 *
 		 * @return void
 		 **/
-		function render($title, $status, $recom) {
+		function render($title, $resultsObj) {
+			
+			// get all the failed test's recommendations
+			$failed = $resultsObj->getFailedRecoms();
+			
+			// get the overall info and put it in separate variables
+			$overall = $resultsObj->getOverall();
+			$status = $overall['status'];
+			$recom  = $overall['recommendation'];
+			
+			// start the output table
 			$show = '<table>';
 			$show .= '<tr><td>';
 			$show .= $title;
@@ -583,9 +593,19 @@
 			$show .= $this->getStatus($status);
 			$show .= '</td></tr>';
 			$show .= '<tr><td colspan="2">';
-			$show .= $recom;
-			$show .= '</td></tr>';
+			$show .= $recom . '<br />';
 			
+			// only if there are failed tests do we want to show the recommendations
+			if(!empty($failed)) {
+				$show .= '<ul>';
+				foreach( $failed as $singleR )
+				{
+					$show .= '<li>' . $singleR . '</li>';
+				}
+				$show .= '</ul>';
+			}
+
+			$show .= '</td></tr>';
 			$show .= '</td></tr></table>';
 			
 			return $show;	
@@ -678,6 +698,33 @@
 		 **/
 		function getTests() {
 			return $this->testResults;
+		}
+		
+		/**
+		 * Gets the status for a test
+		 *
+		 * @return int
+		 **/
+		function getStatus($test) {
+			return $this->testResults[$test]['status'];
+		}
+		
+		/**
+		 * Returns an array of recommendations of all those tests that failed.
+		 *
+		 * @return array
+		 **/
+		function getFailedRecoms() {
+			$failed = array();
+			
+			foreach( $this->testResults as $test )
+			{
+				if ( $test['status'] !== 1) {
+					$failed[] = $test['recommendation'];
+				}
+			}
+			print_r($failed);
+			return $failed;
 		}
 		
 	} // END class Result
@@ -836,20 +883,20 @@
 		}
 		
 		function evaluate() {
-			// $allgood = ($this->output['Version']['status'] == 1
-			// 	&& $this->output['Memory Limit']['status'] == 1
-			// 	&& $this->output['Max Upload Filesize']['status'] == 1
-			// 	&& $this->output['Required Functions']['status'] == 1);
-			// $configError = ($this->output['Version']['status'] == 1
-			// 	|| $this->output['Memory Limit']['status'] != 1 
-			// 	|| $this->output['Max Upload Filesize']['status'] != 1
-			// 	|| $this->output['Required Functions']['status'] != 1);
-			// 
-			// if ( $allgood ) {
-			// 	$this->all(1, 'All is peachy!');
-			// } elseif ( $configError ) {
-			// 	$this->all(-1, 'You have the right PHP version, but there was a configuration error:');
-			// }
+			$allgood = ($this->results->getStatus('Version') == 1
+				&& $this->results->getStatus('Memory Limit') == 1
+				&& $this->results->getStatus('Max Upload Filesize') == 1
+				&& $this->results->getStatus('Required Functions') == 1);
+			$configError = ($this->results->getStatus('Version') == 1
+				|| $this->results->getStatus('Memory Limit') != 1 
+				|| $this->results->getStatus('Max Upload Filesize') != 1
+				|| $this->results->getStatus('Required Functions') != 1);
+			
+			if ( $allgood ) {
+				$this->results->overall(1, 'All is peachy!');
+			} elseif ( $configError ) {
+				$this->results->overall(-1, 'You have the right PHP version, but there was a configuration error:');
+			}
 		}
 		
 		/**
@@ -1048,9 +1095,19 @@
 				$this->checkNormalConnection();
 				$this->checkPersistentConnection();
 				$this->checkServer();
-				$this->checkHost();
-				
+				$this->checkHost();		
 			}
+		}
+		
+		function evaluate() {
+			$allgood = $this->running;
+			
+			if($allgood) {
+				$this->results->overall('1', 'All good!');				
+			} else {
+				$this->results->overall('-1', 'Aaah no!');
+			}
+
 		}
 		
 		/**
