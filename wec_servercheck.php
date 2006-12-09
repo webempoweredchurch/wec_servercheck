@@ -136,12 +136,9 @@
 		 **/
 		function getTestValue($test, $subtest) {
 			
-			// get object out of array
-			$obj = $this->modules[$test];
-			
 			// check if test has already run and run it if not.
-			if(!$obj->hasRun()) {
-				$obj->run();
+			if(!$this->modules[$test]->hasRun()) {
+				$this->modules[$test]->run();
 			}
 			$modResults = $this->results[$test]->getTests();
 			
@@ -1485,7 +1482,7 @@
 			
 			// if we get a 404 not found on the virtual file and mod_rewrite was there, overriding with .htaccess
 			// is probably not allowed.
-			} else if(strpos(strtolower($vheaders[0]), '404 not found') !== false && $this->output['mod_rewrite']['status'] == 1) {
+			} else if(strpos(strtolower($vheaders[0]), '404 not found') !== false && $this->results->getTestStatus('mod_rewrite') == 1) {
 				$recom = "Rewriting URLs failed. Your host doesn't allow overriding settings with .htaccess files.
 					Make sure that 'AllowOverride All' is set for your virtual host in your Apache config.";
 				$this->results->test('Rewrite URLs', 'Failed', -1, $recom);
@@ -1511,6 +1508,7 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class TYPO3 extends Module {
+		
 		/**
 		 * Constructor
 		 *
