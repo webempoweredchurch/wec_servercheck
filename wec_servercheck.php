@@ -173,7 +173,7 @@
 		}
 	}
 	$mc = new ModuleController();
-	$GLOBALS['MC'] = $mc;
+	$GLOBALS['mc'] = $mc;
 	
 	/**
 	 * Provides an object that just controls all other renderers. RenderController will simply 
@@ -1331,12 +1331,12 @@
 
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
-				if(!$sym && strpos('win', strtolower($GLOBALS['MC']->getTestValue('PHP Info', 'OS')))) {
+				if(!$sym && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Info', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
 					$this->results->test('Symlinks', 'Problem', 0, $recom);
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !strpos('win', strtolower($GLOBALS['MC']->getTestValue('PHP Info', 'OS')))) {
+				} else if(!$sym && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Info', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec, so please download
 						the .zip package instead.';
 					$this->results->test('Symlinks', 'Problem', -1, $recom);
@@ -1398,7 +1398,7 @@
 					$this->results->test('mod_rewrite', 'present', 1);				
 		
 				// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-				} else if($GLOBALS['MC']->getTestValue('PHP Info', 'Server API') == 'apache' || $GLOBALS['MC']->getTestValue('PHP Info', 'Server API') == 'apache2handler'){
+				} else if($GLOBALS['mc']->getTestValue('PHP Info', 'Server API') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Info', 'Server API') == 'apache2handler'){
 					$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
 						having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 					$this->results->test('mod_rewrite', 'not found', -1, $recom);	
@@ -1443,7 +1443,7 @@
 		function checkHtaccess() {
 			
 			// get minimum file permissions from earlier test
-			$perms = $GLOBALS['MC']->getTestValue('File Permissions', 'Minimum write permissions');
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions', 'Minimum write permissions');
 			
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
@@ -1602,13 +1602,13 @@
 			
 			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
 			// stuff is not in this .htaccess file.
-			} else if($GLOBALS['MC']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == 1){
+			} else if($GLOBALS['mc']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == 1){
 				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
 					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
 				$this->results->test('RealURL', 'Failed', -1, $recom);
 			
 			// if the general rewriting worked but .htaccess is missing, it obviously won't work.
-			} else if ($GLOBALS['MC']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
+			} else if ($GLOBALS['mc']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
 				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
 					copied it from the WEC Starter Package to your TYPO3 root directory.";
 				$this->results->test('RealURL', 'Failed', -1, $recom);
