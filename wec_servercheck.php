@@ -135,10 +135,13 @@
 		 * @return String
 		 **/
 		function getTestValue($test, $subtest) {
-		
+			
+			// get object out of array
+			$obj = $this->modules[$test];
+			
 			// check if test has already run and run it if not.
-			if(!$this->modules[$test]->hasRun()) {
-				$this->modules[$test]->run();
+			if(!$obj->hasRun()) {
+				$obj->run();
 			}
 			$modResults = $this->results[$test]->getTests();
 			
