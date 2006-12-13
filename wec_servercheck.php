@@ -1109,7 +1109,6 @@
 			$this->checkClient();			
 
 			if($this->running) {				
-				$this->checkNormalConnection();
 				$this->checkPersistentConnection();
 				$this->checkServer();
 				$this->checkHost();		
@@ -1188,22 +1187,6 @@
 				$this->results->test('Status', 'Running', -1, mysql_error());
 			}
 
-		}
-		
-		/**
-		 * Trys to establish a non-persistent connection to the MySQL server.
-		 *
-		 * @return void
-		 **/
-		function checkNormalConnection() {
-			$link = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
-			if($link) {
-				$this->results->test('Non-persistent connection', 'Success', 1);
-			} else {
-				$recom = 'For some reason a normal connection to the MySQL database cannot be established.';
-				$this->results->test('Non-persistent connection', 'Failed', -1, $recom);
-			}
-			mysql_close($link);
 		}
 		
 		/**
