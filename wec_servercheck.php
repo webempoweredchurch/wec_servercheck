@@ -580,6 +580,9 @@
 			// get all the failed test's recommendations
 			$failed = $resultsObj->getFailedRecoms();
 			
+			// check if we want to show failed recommendations
+			$showFailed = $resultsObj->showFailed();
+			
 			// get the overall info and put it in separate variables
 			$overall = $resultsObj->getOverall();
 			$status = $overall['status'];
@@ -596,7 +599,7 @@
 			$show .= $recom . '<br />';
 			
 			// only if there are failed tests do we want to show the recommendations
-			if(!empty($failed)) {
+			if(!empty($failed) && $showFailed) {
 				$show .= '<ul>';
 				foreach( $failed as $singleR )
 				{
@@ -657,6 +660,9 @@
 		 **/
 		function __construct() {
 			$this->overall = array();
+			$this->overall['showFailed'] = false;
+			$this->overall['status'] = -1;
+			$this->overall['recommendation'] = '';
 			$this->testResults = array();
 		}
 		
@@ -677,9 +683,10 @@
 		 *
 		 * @return void
 		 **/
-		function overall($status, $recommendation) {
+		function overall($status, $recommendation, $showFailedRecoms = true) {
 			$this->overall['status'] = $status;
 			$this->overall['recommendation'] = $recommendation;
+			$this->overall['showFailed'] = $showFailedRecoms;
 		}
 		
 		/**
@@ -725,6 +732,15 @@
 			}
 			print_r($failed);
 			return $failed;
+		}
+		
+		/**
+		 * Whether or not to show the single recommendations
+		 *
+		 * @return boolean
+		 **/
+		function showFailed() {
+			return $this->overall['showFailed'];
 		}
 		
 	} // END class Result
@@ -867,7 +883,7 @@
 		function __construct() {
 			parent::__construct();
 
-			$this->title = "PHP Info";
+			$this->title = "PHP Test";
 		}
 		
 		
@@ -889,11 +905,14 @@
 				|| $this->results->getStatus('Memory Limit') != 1 
 				|| $this->results->getStatus('Max Upload Filesize') != 1
 				|| $this->results->getStatus('Required Functions') != 1);
+			$wrongVersion = $this->results->getStatus('Version') != 1;
 			
 			if ( $allgood ) {
 				$this->results->overall(1, 'All is peachy!');
 			} elseif ( $configError ) {
-				$this->results->overall(-1, 'You have the right PHP version, but there was a configuration error:');
+				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
+			} elseif ($wrongVersion) {
+				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 4.3.4', false);
 			}
 		}
 		
@@ -1574,7 +1593,7 @@
 		 * @return void
 		 **/
 		function checkRealURL() {
-			
+
 			// get the Learn & Grow page normally
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
 			$norm = fread($fileHandle, 8192);
