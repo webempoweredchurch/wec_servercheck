@@ -1112,7 +1112,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = "MySQL Info";
+			$this->title = "MySQL Test";
 			$this->running = false;
 		}
 		
@@ -1349,12 +1349,12 @@
 
 				// check symlink:
 				// if no symlink was created and this is windows show warning.
-				if(!$sym && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Info', 'OS')))) {
+				if(!$sym && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
 					$this->results->test('Symlinks', 'Problem', 0, $recom);
 				
 				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Info', 'OS')))) {
+				} else if(!$sym && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')))) {
 					$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec, so please download
 						the .zip package instead.';
 					$this->results->test('Symlinks', 'Problem', -1, $recom);
@@ -1416,7 +1416,7 @@
 					$this->results->test('mod_rewrite', 'present', 1);				
 		
 				// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-				} else if($GLOBALS['mc']->getTestValue('PHP Info', 'Server API') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Info', 'Server API') == 'apache2handler'){
+				} else if($GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache2handler'){
 					$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
 						having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 					$this->results->test('mod_rewrite', 'not found', -1, $recom);	
