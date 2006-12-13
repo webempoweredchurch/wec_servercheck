@@ -74,7 +74,8 @@
 	$file = file_exists('fileadmin') && is_dir('fileadmin');
 	$uploads = file_exists('uploads') && is_dir('uploads');
 	
-	if($typo3 && $t3conf && file && $uploads) $GLOBALS['t3installed'] = true;
+	// define global variable to hold that information
+	($typo3 && $t3conf && $file && $uploads) ? $GLOBALS['t3installed'] = true : $GLOBALS['t3installed'] = false ;
 
 	//-----------------------------------
 	//|			Controllers				|
@@ -743,7 +744,6 @@
 					$failed[] = $test['recommendation'];
 				}
 			}
-			print_r($failed);
 			return $failed;
 		}
 		
@@ -1680,7 +1680,7 @@
 			
 		}
 	}
-	$mc->register('TYPO3');
+	if($GLOBALS['t3installed']) $mc->register('TYPO3');
 	
 	//-----------------------------------
 	//|			Nitty Gritty			|
