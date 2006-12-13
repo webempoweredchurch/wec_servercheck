@@ -1116,12 +1116,15 @@
 		}
 		
 		function evaluate() {
-			$allgood = $this->running;
+			$allgood = $this->running && $this->results->getStatus('Persistent connection') == 1;
+			$notrunning = !$this->running;
 			
-			if($allgood) {
+			if($notrunning) {
+				$this->results->overall('-1', 'MySQL doesn\'t seem to be running.', false);				
+			} elseif($allgood) {
 				$this->results->overall('1', 'All good!');				
 			} else {
-				$this->results->overall('-1', 'Aaah no!');
+				$this->results->overall('-1', 'There have been errors:');
 			}
 
 		}
