@@ -1683,7 +1683,7 @@
 	if($GLOBALS['t3installed']) $mc->register('TYPO3');
 	
 	//-----------------------------------
-	//|			Nitty Gritty			|
+	//|		Pull everything together	|
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
