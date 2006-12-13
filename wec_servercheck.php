@@ -63,6 +63,19 @@
 	// fix relative path in case it's empty
 	if(empty($GLOBALS['relativePath'])) $GLOBALS['relativePath'] = '/';
  	
+
+	//-----------------------------------
+	//|		Check for TYPO3 Install		|
+	//-----------------------------------
+	
+	// check for typo3, typo3conf, fileadmin, uploads
+	$typo3 = file_exists('typo3') && is_dir('typo3');
+	$t3conf = file_exists('typo3conf') && is_dir('typo3conf');
+	$file = file_exists('fileadmin') && is_dir('fileadmin');
+	$uploads = file_exists('uploads') && is_dir('uploads');
+	
+	if($typo3 && $t3conf && file && $uploads) $GLOBALS['t3installed'] = true;
+
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
