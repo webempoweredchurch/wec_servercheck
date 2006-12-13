@@ -1747,7 +1747,7 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	//error_reporting(0);
+	error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
