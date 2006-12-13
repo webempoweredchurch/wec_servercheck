@@ -1407,7 +1407,38 @@
 		function check() {
 			$this->checkVersion();
 			$this->checkModRewrite();
+			$this->override();
 			$this->checkHtaccess();
+
+		}
+		
+		function evaluate() {
+			$isApache = ($GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache2handler');
+			$allgood = ($isApache && $this->results->getStatus('mod_rewrite') == 1 && $this->results->getStatus('Rewrite URLs') == 1);
+			$noApacheRewrite = ($this->results->getStatus('Rewrite URLs') == 1 && !$isApache);
+			$ApacheNoRewrite = ($this->results->getStatus('Rewrite URLs') != 1 && $isApache);
+			
+			// apache but mod_rewrite not found
+			if($allgood) {
+				$this->results->overall(1, 'All works well.', false);
+			} else if($isApache && $this->results->getStatus('mod_rewrite') != 1) {
+				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
+					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+				$this->results->overall(-1, $recom, false);
+			} else if($isApache && $this->results->getStatus('Allow Override') != 1) {
+				$recom = "Overriding settings via .htaccess files is not allowed but reuquired for RealURL to work.
+					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
+				$this->results->overall(-1, $recom, false);
+			} else if($noApacheRewrite) {
+				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
+				$this->results->overall(1, $recom, false);
+			} else if($ApacheNoRewrite) {
+					$recom = 'For some odd reason rewrite didn\'t work. Please report this.';
+					$this->results->overall(-1, $recom);
+			} else {
+				$recom = 'Rewriting URLs didn\'t work at all. Please report this.';
+				$this->results->overall(-1, $recom);
+			}
 		}
 		
 		/**
@@ -1419,24 +1450,12 @@
 			
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
-			if(function_exists('apache_get_modules')) {
+			if(function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules())) {
 
-				// if we find mod_rewrite, all is good.
-				if(in_array('mod_rewrite', apache_get_modules())) {
-					$this->results->test('mod_rewrite', 'present', 1);				
-		
-				// if we don't find it, and the server api is apache, it's not there and we kind of have a problem.
-				} else if($GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Test', 'Server API') == 'apache2handler'){
-					$recom = "mod_rewrite could not be found. It's necessary for the RealURL extension, so if you are
-						having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
-					$this->results->test('mod_rewrite', 'not found', -1, $recom);	
-			
-				// if we don't find it, and the server api is not apache, we can't really say whether it's there or not.
-				} else {
-					$recom = 'mod_rewrite could not be found, but that is because PHP is not running under Apache, which 
-						is perfectly fine. Check to make sure that the \' Rewrite \' test was successful.';
-					$this->results->test('mod_rewrite', 'not found', 0, $recom);	
-				}
+				$this->results->test('mod_rewrite', 'present', 1);
+				
+			} else {
+				$this->results->test('mod_rewrite', 'not found', -1);
 			}
 		}
 		
@@ -1505,24 +1524,55 @@
 			// if we get a 200 OK and the headers are the same, it worked!
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
 				$this->results->test('Rewrite URLs', 'success', 1);
-			
-			// if we get a 404 not found on the virtual file and mod_rewrite was there, overriding with .htaccess
-			// is probably not allowed.
-			} else if(strpos(strtolower($vheaders[0]), '404 not found') !== false && $this->results->getTestStatus('mod_rewrite') == 1) {
-				$recom = "Rewriting URLs failed. Your host doesn't allow overriding settings with .htaccess files.
-					Make sure that 'AllowOverride All' is set for your virtual host in your Apache config.";
+
+			} else {
+				$recom = "Rewriting URLs failed.";
 				$this->results->test('Rewrite URLs', 'Failed', -1, $recom);
 			}
-			// implicit here is that if the mod_rewrite test failed, rewriting obviously cannot work, so we don't show
-			// any results since the user should already know that it won't work.
-			
-			
+		
 			// clean up
 			unlink('test123/.htaccess');
 			unlink('test123/rewrite_test.php');
 			rmdir('test123');
+		}
+		
+		/**
+		 * Makes sure overriding settings with .htaccess is allowed
+		 *
+		 * @return void
+		 **/
+		function override() {
 			
+			// get minimum file permissions from earlier test
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions', 'Minimum write permissions');
 			
+			// create temp folder to create .htaccess file in.
+			mkdir('test123', octdec($perms));
+			
+			// this goes into the .htaccess file
+			$htaccess = "AuthType Basic \n
+			AuthName \"Tester\" \n
+			AuthUserFile / \n
+			Require valid-user";
+			
+			// write our htaccess file
+			$fileHandle = fopen('test123/.htaccess', 'w+');
+			$bla = fwrite($fileHandle, $htaccess);
+			fclose($fileHandle);
+			
+			// Now check headers on the real file...
+			$headers = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
+			
+			if(strpos($headers[0], '401 Authorization Required') !== false) {
+				$this->results->test('Allow Override', 'Success', 1);
+			} else {
+				$recom = 'Overriding Apache settings with .htaccess files is not allowed.';
+				$this->results->test('Allow Override', 'Failed', -1, $recom);
+			}
+			
+			// clean up
+			unlink('test123/.htaccess');
+			rmdir('test123');	
 		}
 	}
 	$mc->register('Apache');
