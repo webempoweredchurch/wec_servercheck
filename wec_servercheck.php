@@ -1133,11 +1133,11 @@
 			$notrunning = !$this->running;
 			
 			if($notrunning) {
-				$this->results->overall('-1', 'MySQL doesn\'t seem to be running.', false);				
+				$this->results->overall(-1, 'MySQL doesn\'t seem to be running.', false);				
 			} elseif($allgood) {
-				$this->results->overall('1', 'All good!');				
+				$this->results->overall(1, 'All good!');				
 			} else {
-				$this->results->overall('-1', 'There have been errors:');
+				$this->results->overall(-1, 'There have been errors:');
 			}
 
 		}
@@ -1245,6 +1245,30 @@
 			$this->checkR();
 		}
 		
+		function evaluate() {
+			
+			$allgood = true;
+			$failwin = 	$this->results->getStatus('Symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
+			$failnowin = $this->results->getStatus('Symlinks') != 1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
+			
+			// if no symlink was created and this is windows show warning.
+			if($allgood) {
+				$this->results->overall(1, 'File permissions and symlinks okay!');
+
+			// no symlink was created, but we aren't using Windows; that's not good.
+			} else if($failnowin) {
+				$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec.';
+				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
+				$this->results->overall(-1, $recom);
+			
+			// using windows
+			} else if ($failwin) {
+				$recom = 'Symlinks couldn\'t be created. This is perfectly normal since the server is running Windows.';
+				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
+				$this->results->overall(1, $recom, false);
+			}
+
+		}
 		/**
 		 * Checks which permissions are needed to read, write, and execute files.
 		 *
@@ -1346,27 +1370,13 @@
 					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed.");
 				}
 
-
-				// check symlink:
-				// if no symlink was created and this is windows show warning.
-				if(!$sym && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')))) {
-					$recom = 'Symlinks couldn\'t be created. This is probably okay since you are using Windows.';
+				// check symlink
+				if(!$sym) {
+					$recom = 'Symlinks couldn\'t be created.';
 					$this->results->test('Symlinks', 'Problem', 0, $recom);
-				
-				// no symlink was created, but we aren't using Windows; that's not good.
-				} else if(!$sym && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')))) {
-					$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec, so please download
-						the .zip package instead.';
-					$this->results->test('Symlinks', 'Problem', -1, $recom);
-
-				// symlink is there and header is good
-				} else if ($sym && strpos($sHeaders[0], "200 OK") !== false) {
-					$this->results->test('Symlinks', 'success', 1);
-				
-				// symlink is there but couldn't be read
-				} else {
-					$this->results->test('Symlinks', 'Problem', -1, "Reading symlink failed.");
-				}
+				} else if ($sym) {
+					$this->results->test('Symlinks', 'Success', 1);					
+ 				}
 				
 				// remove the temporary file and folder
 				unlink('tmp/test.php');
