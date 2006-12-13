@@ -1247,7 +1247,7 @@
 		
 		function evaluate() {
 			
-			$allgood = true;
+			$allgood = $this->results->getStatus('Symlinks') == 1;
 			$failwin = 	$this->results->getStatus('Symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
 			$failnowin = $this->results->getStatus('Symlinks') != 1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
 			
