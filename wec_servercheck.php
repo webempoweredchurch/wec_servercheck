@@ -1371,7 +1371,7 @@
 				if(strpos($headers[0], "200 OK") !== false) {
 					$this->results->test('Minimum read permissions', $perm, 1);
 				} else {
-					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed. Headers were:" . $headers[0]);
+					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed. Headers were: " . $headers[0]);
 				}
 
 				// check symlink
