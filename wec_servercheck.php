@@ -147,7 +147,7 @@
 		 * @return String
 		 **/
 		function getTestValue($test, $subtest) {
-			
+
 			// check if test has already run and run it if not.
 			if(!$this->modules[$test]->hasRun()) {
 				$this->modules[$test]->run();
@@ -165,7 +165,7 @@
 		 * @return String
 		 **/
 		function getTestStatus($test, $subtest) {
-		
+
 			// check if test has already run and run it if not.
 			if(!$this->modules[$test]->hasRun()) {
 				$this->modules[$test]->run();
@@ -936,7 +936,7 @@
 			
 			// get PHP version and add it as value
 			$version = phpversion();
-						
+
 			// get major PHP version
 			$versionArray = explode('.', $version);
 			$majorVersion = $versionArray[0];
@@ -944,7 +944,7 @@
 			$miniVersion = $versionArray[2];
 			
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
-			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion === 0) {
+			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion == 0) {
 				$recom = 'There are a few severe bugs in PHP 5.2.0 that prevent TYPO3 from working correctly.
 					Please either upgrade to a higher version or downgrade to a lower version.';
 				$this->results->test('Version', $version, 0, $recom);			
@@ -1422,7 +1422,7 @@
 			$allgood = ($isApache && $this->results->getStatus('mod_rewrite') == 1 && $this->results->getStatus('Rewrite URLs') == 1);
 			$noApacheRewrite = ($this->results->getStatus('Rewrite URLs') == 1 && !$isApache);
 			$ApacheNoRewrite = ($this->results->getStatus('Rewrite URLs') != 1 && $isApache);
-			
+
 			// apache but mod_rewrite not found
 			if($allgood) {
 				$this->results->overall(1, 'All works well.', false);
@@ -1438,8 +1438,8 @@
 				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
 				$this->results->overall(1, $recom, false);
 			} else if($ApacheNoRewrite) {
-					$recom = 'For some odd reason rewrite didn\'t work. Please report this.';
-					$this->results->overall(-1, $recom);
+				$recom = 'For some odd reason rewrite didn\'t work. Please report this.';
+				$this->results->overall(-1, $recom);
 			} else {
 				$recom = 'Rewriting URLs didn\'t work at all. Please report this.';
 				$this->results->overall(-1, $recom);
@@ -1614,7 +1614,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = 'TYPO3 tests';
+			$this->title = 'TYPO3 Tests';
 		}
 		
 		function check() {
@@ -1626,6 +1626,39 @@
 			$this->checkDirs('uploads', -1);
 			$this->checkDirs('typo3temp', -1);
 			$this->checkDirs('typo3conf', -1);
+		}
+		
+		function evaluate() {
+			
+			$allgood = ($this->results->getStatus('Base Tag') == 1 && 
+				$this->results->getStatus('.htaccess file') == 1 &&
+				$this->results->getStatus('RealURL') == 1 &&
+				$this->results->getStatus('fileadmin') == 1 &&
+				$this->results->getStatus('uploads') == 1 &&
+				$this->results->getStatus('typo3temp') == 1 &&
+				$this->results->getStatus('typo3conf') == 1
+			);
+			
+			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && $this->results->getStatus('.htaccess file') == 1);
+			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && $this->results->getStatus('.htaccess file') != 1);
+			$directories = ($this->results->getStatus('fileadmin') == 1 && 
+				$this->results->getStatus('uploads') == 1 &&
+				$this->results->getStatus('typo3temp') == 1 &&
+				$this->results->getStatus('typo3conf') == 1
+			);
+			
+			if ($allgood) {
+				$this->results->overall(1, 'Everything is alright');
+			} else if ($realurlhtthere) {
+				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
+					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
+				$this->results->overall('RealURL', 'Failed', -1, $recom);
+			} else if ($realurlhtnotthere) {
+				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
+					copied it from the WEC Starter Package to your TYPO3 root directory.";
+				$this->results->test('RealURL', 'Failed', -1, $recom);
+			}
+			
 		}
 		
 		/**
@@ -1699,23 +1732,10 @@
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
 				$this->results->test('RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
-			
-			// see if general rewriting worked and the .htaccess file is present. That means the rewrite
-			// stuff is not in this .htaccess file.
-			} else if($GLOBALS['mc']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == 1){
-				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
-					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
-				$this->results->test('RealURL', 'Failed', -1, $recom);
-			
-			// if the general rewriting worked but .htaccess is missing, it obviously won't work.
-			} else if ($GLOBALS['mc']->getTestStatus('Apache', 'Rewrite URLs') == 1 && $this->output['.htaccess file']['status'] == -1) {
-				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
-					copied it from the WEC Starter Package to your TYPO3 root directory.";
-				$this->results->test('RealURL', 'Failed', -1, $recom);
-		
+
 			// just a fail safe.
 			} else {
-				$this->results->test('RealURL', 'Failed', -1, 'Unknown error.');
+				$this->results->test('RealURL', 'Failed', -1, 'Unknown error. Headers: ' . $rheaders[0] . '<br />' . $vheaders[0]);
 			}
 		}
 		
@@ -1769,7 +1789,7 @@
 	//-----------------------------------
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	error_reporting(0);
+	//error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
