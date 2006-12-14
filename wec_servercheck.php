@@ -1369,14 +1369,11 @@
 				$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
 				
-				// check headers output
-				$this->results->test('Headers', print_r($headers, true), 1);
-				
 				// check for good headers from file, if they are, output, if not, it's bad!
 				if(strpos($headers[0], "200 OK") !== false) {
 					$this->results->test('Minimum read permissions', $perm, 1);
 				} else {
-					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed.");
+					$this->results->test('Minimum read permissions', $perm, -1, "Reading file failed. Headers were:" . $headers[0]);
 				}
 
 				// check symlink
