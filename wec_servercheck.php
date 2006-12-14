@@ -598,7 +598,14 @@
 			// get the overall info and put it in separate variables
 			$overall = $resultsObj->getOverall();
 			$status = $overall['status'];
-			$recom  = $overall['recommendation'];
+			
+			// show recommendations
+			$recom = '<ul>';
+			$overall['recommendation'];
+			foreach( $overall['recommendation'] as $value ) {
+				$recom .= '<li>' . $value . '</li>';
+			}
+			$recom .= '</ul>';
 			
 			// start the output table
 			$show = '<table>';
@@ -608,10 +615,11 @@
 			$show .= $this->getStatus($status);
 			$show .= '</td></tr>';
 			$show .= '<tr><td colspan="2">';
-			$show .= $recom . '<br />';
+			$show .= $recom;
 			
 			// only if there are failed tests do we want to show the recommendations
 			if(!empty($failed) && $showFailed) {
+				$show .= '<br />Detailed errors: <br />';
 				$show .= '<ul>';
 				foreach( $failed as $singleR )
 				{
@@ -674,7 +682,7 @@
 			$this->overall = array();
 			$this->overall['showFailed'] = false;
 			$this->overall['status'] = -1;
-			$this->overall['recommendation'] = '';
+			$this->overall['recommendation'] = array();
 			$this->testResults = array();
 		}
 		
@@ -697,7 +705,7 @@
 		 **/
 		function overall($status, $recommendation, $showFailedRecoms = true) {
 			$this->overall['status'] = $status;
-			$this->overall['recommendation'] = $recommendation;
+			$this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
 		}
 		
