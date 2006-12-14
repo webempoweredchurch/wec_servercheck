@@ -942,9 +942,15 @@
 			// get major PHP version
 			$versionArray = explode('.', $version);
 			$majorVersion = $versionArray[0];
+			$minorVersion = $versionArray[1];
+			$miniVersion = $versionArray[2];
 			
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
-			if($majorVersion == 4 || $majorVersion == 5) {
+			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion === 0) {
+				$recom = 'There are a few severe bugs in PHP 5.2.0 that prevent TYPO3 from working correctly.
+					Please either upgrade to a higher version or downgrade to a lower version.';
+				$this->results->test('Version', $version, 0, $recom);			
+			} else if ($majorVersion == 4 || $majorVersion == 5) {
 				$this->results->test('Version', $version, 1);
 			} else {
 				$this->results->test('Version',$version, -1, "PHP Version is too low!");				
@@ -1362,7 +1368,10 @@
 				// get headers for the file and symlink we just created
 				$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-
+				
+				// check headers output
+				$this->results->test('Headers', print_r($headers, true), 1);
+				
 				// check for good headers from file, if they are, output, if not, it's bad!
 				if(strpos($headers[0], "200 OK") !== false) {
 					$this->results->test('Minimum read permissions', $perm, 1);
