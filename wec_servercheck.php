@@ -39,7 +39,6 @@
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = 'root';
 	$GLOBALS['dbPass'] = '';
-	$GLOBALS['relativePath'] = '/wec/';
 	
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// !!!! PLEASE DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
@@ -48,10 +47,13 @@
 	//-----------------------------------
 	//|			Misc Options			|
 	//-----------------------------------
-	
+
+	// determine relative path to typo3/this script.
+	$GLOBALS['relativePath'] = substr($_SERVER['REQUEST_URI'], 0, -19);
+
 	// Path to this script from a web browser, without the name of the script. 
 	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . 
-		substr($_SERVER['REQUEST_URI'], 0, -19);
+		$GLOBALS['relativePath'];
 	
 	// TYPO3 path in the file system.
 	$GLOBALS['TYPO3Path'] = $_SERVER['DOCUMENT_ROOT'] . $GLOBALS['relativePath'];
@@ -59,10 +61,6 @@
 	// TYPO3 path from a browser.
 	$GLOBALS['TYPO3WebPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
 		$GLOBALS['relativePath'];
-		
-	// fix relative path in case it's empty
-	if(empty($GLOBALS['relativePath'])) $GLOBALS['relativePath'] = '/';
- 	
 
 	//-----------------------------------
 	//|		Check for TYPO3 Install		|
