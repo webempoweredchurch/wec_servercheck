@@ -1411,6 +1411,7 @@
 		function check() {
 			$this->checkVersion();
 			$this->checkModRewrite();
+			$this->checkModSecurity();
 			$this->override();
 			$this->checkHtaccess();
 
@@ -1442,6 +1443,23 @@
 			} else {
 				$recom = 'Rewriting URLs didn\'t work at all. Please report this.';
 				$this->results->overall(-1, $recom);
+			}
+		}
+		
+		/**
+		 * Checks for mod_security
+		 *
+		 * @return void
+		 **/
+		function checkModSecurity() {
+			// only do this if we can use apache php functions, i.e. PHP
+			// is not running as CGI
+			if(function_exists('apache_get_modules') && in_array('mod_security', apache_get_modules())) {
+				$recom = 'mod_security isn\'t compatible with some of TYPO3\'s features. Try putting "SecFilterEngine Off"
+					without quotes into your .htaccess file in your TYPO3 root.';
+				$this->results->test('mod_security', 'present', 0, $recom);
+			} else {
+				$this->results->test('mod_security', 'not found', 1);
 			}
 		}
 		
