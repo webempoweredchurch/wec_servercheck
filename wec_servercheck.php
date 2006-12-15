@@ -598,20 +598,23 @@
 			// get the overall info and put it in separate variables
 			$overall = $resultsObj->getOverall();
 			$status = $overall['status'];
+			$recom = null;
 			
-			// show recommendations
-			$recom = '<ul>';
-			$overall['recommendation'];
-			foreach( $overall['recommendation'] as $value ) {
-				$recom .= '<li>' . $value . '</li>';
+			// show recommendations if there are any
+			if(!empty($overall['recommendation'])) {
+				
+				$recom = '<ul>';
+				foreach( $overall['recommendation'] as $value ) {
+					$recom .= '<li>' . $value . '</li>';
+				}
+				$recom .= '</ul>';
 			}
-			$recom .= '</ul>';
 			
 			// start the output table
-			$show = '<table>';
-			$show .= '<tr><td>';
+			$show = '<table cellspacing="0">';
+			$show .= '<tr><td class="overall-tablefield">';
 			$show .= $title;
-			$show .= '</td><td>';
+			$show .= '</td><td style="text-align: right;" class="overall-tablefield">';
 			$show .= $this->getStatus($status);
 			$show .= '</td></tr>';
 			$show .= '<tr><td colspan="2">';
@@ -619,7 +622,7 @@
 			
 			// only if there are failed tests do we want to show the recommendations
 			if(!empty($failed) && $showFailed) {
-				$show .= '<br />Detailed errors: <br />';
+				$show .= 'Details: <br />';
 				$show .= '<ul>';
 				foreach( $failed as $singleR )
 				{
@@ -648,6 +651,22 @@
 			} else if ($status == -1) {
 				return '<span style="color: red;">Failed!</span>';
 			}
+		}
+		
+		/**
+		 * Set headers
+		 *
+		 * @return String
+		 **/
+		function setHeaders() {
+			$headers = 	'<style type="text/css">
+				.overall-tablefield {
+					width: 300px;
+					font-weight: bold;
+					border-bottom: 1px solid black;
+				}			
+			</style>';
+			return $headers;
 		}
 		
 	} // END class OverallResults	
@@ -703,7 +722,7 @@
 		 *
 		 * @return void
 		 **/
-		function overall($status, $recommendation, $showFailedRecoms = true) {
+		function overall($status, $recommendation = null, $showFailedRecoms = true) {
 			$this->overall['status'] = $status;
 			$this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
@@ -927,7 +946,7 @@
 			$wrongVersion = $this->results->getStatus('Version') != 1;
 			
 			if ( $allgood ) {
-				$this->results->overall(1, 'All is peachy!');
+				$this->results->overall(1, 'PHP okay!');
 			} elseif ( $configError ) {
 				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
@@ -1647,24 +1666,41 @@
 				$this->results->getStatus('typo3conf') == 1
 			);
 			
-			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && $this->results->getStatus('.htaccess file') == 1);
-			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && $this->results->getStatus('.htaccess file') != 1);
+			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && 
+				$this->results->getStatus('.htaccess file') == 1 &&
+				$this->results->getStatus('RealURL') != 1
+			);
+			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Tests', 'Rewrite URLs') == 1 && 
+				$this->results->getStatus('.htaccess file') != 1 &&
+				$this->results->getStatus('RealURL') != 1
+			);
 			$directories = ($this->results->getStatus('fileadmin') == 1 && 
 				$this->results->getStatus('uploads') == 1 &&
 				$this->results->getStatus('typo3temp') == 1 &&
 				$this->results->getStatus('typo3conf') == 1
 			);
 			
+			// if everything is good, say it and quit
 			if ($allgood) {
 				$this->results->overall(1, 'Everything is alright');
-			} else if ($realurlhtthere) {
+				return;
+			} 
+			
+			// eval realurl results
+			if ($realurlhtthere) {
 				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
 					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
-				$this->results->overall('RealURL', 'Failed', -1, $recom);
+				$this->results->overall(-1, $recom);
 			} else if ($realurlhtnotthere) {
 				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
 					copied it from the WEC Starter Package to your TYPO3 root directory.";
-				$this->results->test('RealURL', 'Failed', -1, $recom);
+				$this->results->overall(-1, $recom);
+			}
+			
+			// eval directory results
+			if(!$directories) {
+				$recom = 'Some directories weren\'t writable. Please check permissions on those.';
+				$this->results->overall(-1, $recom);
 			}
 			
 		}
