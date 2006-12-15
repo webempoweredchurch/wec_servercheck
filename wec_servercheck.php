@@ -37,7 +37,7 @@
 	// relativePath: The relative path to the TYPO3 installation. If TYPO3 is installed in a 
 	//		subfolder, put '/subfolder/', if it's installed in the website root, leave empty.
 	$GLOBALS['dbHost'] = 'localhost';
-	$GLOBALS['dbUser'] = 'root';
+	$GLOBALS['dbUser'] = '';
 	$GLOBALS['dbPass'] = '';
 	
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1170,10 +1170,15 @@
 		}
 		
 		function evaluate() {
+			$noinfo = $this->results->getStatus('Status') == 0;
 			$allgood = $this->running && $this->results->getStatus('Persistent connection') == 1;
 			$notrunning = !$this->running;
 			
-			if($notrunning) {
+			if ($noinfo) {
+				$recom = 'Testing not possible. Please edit this file and enter your database information
+					as provided by your host on the top.';
+				$this->results->overall(0, $recom, false);				
+			} else if ($notrunning) {
 				$this->results->overall(-1, 'MySQL doesn\'t seem to be running.', false);				
 			} elseif($allgood) {
 				$this->results->overall(1, 'All good!');				
@@ -1235,6 +1240,12 @@
 		 * @return void
 		 **/
 		function checkStatus() {
+			
+			// check if user has entered their information
+			if(empty($GLOBALS['dbUser']) && empty($GLOBALS['dbPass'])) {
+				$this->results->test('Status', 'Missing Information', 0);
+				return;
+			}
 			
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($con != false) {
