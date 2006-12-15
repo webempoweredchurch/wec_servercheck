@@ -1173,8 +1173,8 @@
 			$notrunning = !$this->running;
 			
 			if ($noinfo) {
-				$recom = 'Testing not possible. Please edit this file and enter your database information
-					as provided by your host on the top.';
+				$recom = 'Testing not possible. Please edit the top of this file and enter your database information
+					as provided by your host.';
 				$this->results->overall(0, $recom, false);				
 			} else if ($notrunning) {
 				$this->results->overall(-1, 'MySQL doesn\'t seem to be running.', false);				
