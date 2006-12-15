@@ -1453,14 +1453,19 @@
 			// apache but mod_rewrite not found
 			if($allgood) {
 				$this->results->overall(1, 'All works well.', false);
-			} else if($isApache && $this->results->getStatus('mod_rewrite') != 1) {
-				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
+				return;
+			}
+			
+			 if ($isApache && $this->results->getStatus('mod_rewrite') == -1) {
+				$recom = "The mod_rewrite module is not installed. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->results->overall(-1, $recom, false);
-			} else if($isApache && $this->results->getStatus('Allow Override') != 1) {
-				$recom = "Overriding settings via .htaccess files is not allowed but reuquired for RealURL to work.
-					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
-				$this->results->overall(-1, $recom, false);
+
+			} else if($isApache && $this->results->getStatus('mod_rewrite') != -1) {
+				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
+					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+				$this->results->overall(0, $recom, false);
+				
 			} else if($noApacheRewrite) {
 				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
 				$this->results->overall(1, $recom, false);
@@ -1471,6 +1476,12 @@
 				$recom = 'Rewriting URLs didn\'t work at all. Please report this.';
 				$this->results->overall(-1, $recom);
 			}
+			
+			if ($isApache && $this->results->getStatus('Allow Override') != 1) {
+				$recom = "Overriding settings via .htaccess files is not allowed but reuquired for RealURL to work.
+					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
+				$this->results->overall(-1, $recom, false);
+			}
 		}
 		
 		/**
@@ -1479,6 +1490,7 @@
 		 * @return void
 		 **/
 		function checkModSecurity() {
+		
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
 			if(function_exists('apache_get_modules') && in_array('mod_security', apache_get_modules())) {
@@ -1499,12 +1511,15 @@
 			
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
-			if(function_exists('apache_get_modules') && in_array('mod_rewrite', apache_get_modules())) {
-
-				$this->results->test('mod_rewrite', 'present', 1);
+			if(function_exists('apache_get_modules')) {
 				
+				if (in_array('mod_rewrite', apache_get_modules())) {
+					$this->results->test('mod_rewrite', 'present', 1);		
+				} else {
+					$this->results->test('mod_rewrite', 'not found', -1);
+				}
 			} else {
-				$this->results->test('mod_rewrite', 'not found', -1);
+				$this->results->test('mod_rewrite', 'cannot determine', 0);		
 			}
 		}
 		
