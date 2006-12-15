@@ -34,8 +34,6 @@
 	// dbHost: it's probably okay to leave as localhost
 	// dbUser: the database user that typo3 uses
 	// dbPass: the password for dbUser
-	// relativePath: The relative path to the TYPO3 installation. If TYPO3 is installed in a 
-	//		subfolder, put '/subfolder/', if it's installed in the website root, leave empty.
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = '';
 	$GLOBALS['dbPass'] = '';
