@@ -461,8 +461,7 @@
 			return $headers;
 		}
 	} 
-	$rc->register('RenderDetailed');
-	
+
 	/**
 	 * Renders the output as plain text inside a textarea for easy copying and pasting.
 	 *
@@ -555,7 +554,6 @@
 			}
 		}
 	}
-	$rc->register('RenderPlain');
 	
 	/**
 	 * Shows just one result for each Module, making it easier for non-technical users to
@@ -670,7 +668,6 @@
 		}
 		
 	} // END class OverallResults	
-	$rc->register('OverallResults');
 	
 	//-----------------------------------
 	//|			Test Modules			|
@@ -1143,7 +1140,6 @@
 			}
 		}
 	}
-	$mc->register('PHP');
 	
 	/**
 	 * Does some basic MySQL checks.
@@ -1267,7 +1263,6 @@
 			mysql_close($link);
 		}
 	}
-	$mc->register('MySQL');
 		
 	/**
 	 * Checks file permissions
@@ -1430,7 +1425,6 @@
 			}
 		}	
 	}
-	$mc->register('FilePermissions');
 	
 	/**
 	 * This class tests the apache environment for mod_rewrite and .htaccess stuff.
@@ -1653,7 +1647,6 @@
 			rmdir('test123');	
 		}
 	}
-	$mc->register('Apache');
 
 	/**
 	 * Specific TYPO3 tests, like checking permissions in various folders and whether default configuration
@@ -1855,11 +1848,22 @@
 			
 		}
 	}
-	if($GLOBALS['t3installed']) $mc->register('TYPO3');
 	
 	//-----------------------------------
 	//|		Pull everything together	|
 	//-----------------------------------
+	
+	// register renderers
+	$rc->register('RenderDetailed');
+	$rc->register('RenderPlain');
+	$rc->register('OverallResults');
+	
+	// register modules
+	$mc->register('PHP');
+	$mc->register('MySQL');
+	$mc->register('FilePermissions');
+	$mc->register('Apache');
+	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
 	//error_reporting(0);
