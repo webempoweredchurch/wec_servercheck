@@ -1173,8 +1173,7 @@
 			$notrunning = !$this->running;
 			
 			if ($noinfo) {
-				$recom = 'Testing not possible. Please edit the top of this file and enter your database information
-					as provided by your host.';
+				$recom = 'Testing not possible.';
 				$this->results->overall(0, $recom, false);				
 			} else if ($notrunning) {
 				$this->results->overall(-1, 'MySQL doesn\'t seem to be running.', false);				
@@ -1241,7 +1240,9 @@
 			
 			// check if user has entered their information
 			if(empty($GLOBALS['dbUser']) && empty($GLOBALS['dbPass'])) {
-				$this->results->test('Status', 'Missing Information', 0);
+				$recom = 'Please edit the top of this file and enter your database information
+					as provided by your host.';
+				$this->results->test('Status', 'Missing Information', 0, $recom);
 				return;
 			}
 			
