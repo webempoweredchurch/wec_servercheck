@@ -149,8 +149,9 @@
 			// run a single test
 			$this->modules[$test]->$subtest();
 
-			// get the results for it
-			$modResults = $this->modules[$test]->getResults()->getTests();
+			// get the results object for it first, then the results
+			$res = $this->modules[$test]->getResults();
+			$modResults = $res->getTests();
 
 			// return the value for the one we need
 			return $modResults[$subtest]['value'];
@@ -168,8 +169,9 @@
 			// run a single test
 			$this->modules[$test]->$subtest();
 			
-			// get the results for it
-			$modResults = $this->modules[$test]->getResults()->getTests();
+			// get the results object for it first, then the results
+			$res = $this->modules[$test]->getResults();
+			$modResults = $res->getTests();
 
 			// return the status for the one we need
 			return $modResults[$subtest]['status'];
