@@ -133,7 +133,7 @@
 		function runAll() {
 			foreach($this->modules as $module) {
 				$module->run();
-				$this->results[$module->getTitle()] = $module->getResults();
+				$this->results[$module->getTitle()] = $module->getResults();					
 			}
 		}
 		
@@ -150,6 +150,7 @@
 			if(!$this->modules[$test]->hasRun()) {
 				$this->modules[$test]->run();
 			}
+
 			$modResults = $this->results[$test]->getTests();
 			
 			return $modResults[$subtest]['value'];
@@ -706,6 +707,10 @@
 		 * @return void
 		 **/
 		function test($name, $value, $status, $recommendation = null) {
+			$result = debug_backtrace();
+			echo '<pre>';
+			print_r($result[1]['function']);
+			echo '</pre>';
 			$this->testResults[$name]['value'] = $value;
 			$this->testResults[$name]['status'] = $status;
 			(empty($recommendation)) ? null : $this->testResults[$name]['recommendation'] = $recommendation;
@@ -774,8 +779,7 @@
 		 **/
 		function showFailed() {
 			return $this->overall['showFailed'];
-		}
-		
+		}		
 	} // END class Result
 
 	/**
@@ -969,7 +973,7 @@
 		 * @return void
 		 **/
 		function checkVersion() {
-			
+
 			// get PHP version and add it as value
 			$version = phpversion();
 
@@ -997,7 +1001,7 @@
 		 * @return void
 		 **/
 		function checkServerAPI() {
-			
+
 			// get Server API
 			$api = php_sapi_name();
 					
@@ -1015,7 +1019,7 @@
 		 * @return void
 		 **/
 		function checkOS() {
-			
+
 			// get OS the server is running.
 			$os = php_uname('s');
 			
@@ -1033,7 +1037,7 @@
 		 * @return void
 		 **/
 		function checkMemoryLimit() {
-	
+
 			// get memory limit
 			$mlimit = ini_get('memory_limit');
 
@@ -1053,12 +1057,16 @@
 			} else if (empty($mlimit)) {
 				$this->results->test('Memory Limit', "No memory limit in effect!", 1);
 
-			// else it's too low :()
+			// else it's too low :(
 			} else {
-				$recom = 'The memory limit is too low. You can try putting this line in the .htaccess file of your
-					TYPO3 root directory:<br />php_value memory_limit 32M<br />
-					If that doesn\'t work and you have access to your php.ini, please set it to at least 32M or ask your
-					host to do so if you don\'t have access to it.';
+				$recom = 'The memory limit is too low.';
+				if($GLOBALS['mc']->getTestStatus('Apache Tests', 'Allow Override') == 1) {
+					$recom .= 'You can try putting this line in the .htaccess file of your
+						TYPO3 root directory:<br />php_value memory_limit 32M<br />';
+				}
+				$recom .= 'If you have access to your php.ini, please set it to at least 32M or ask your
+				host to do so if you don\'t have access to it.';
+					
 				$this->results->test('Memory Limit', $mlimit, -1, $recom);
 			}
 			
@@ -1873,14 +1881,16 @@
 	$mc->register('MySQL');
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
-	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
+	//if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
 	//error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
-
+	echo '<pre>';
+	print_r($mc->getResults());
+	echo '</pre>';
 	// pass the results to the render controller
 	$rc->setResults($mc->getResults());
 
