@@ -938,7 +938,15 @@
 			$allgood = ($this->results->getStatus('Version') == 1
 				&& $this->results->getStatus('Memory Limit') == 1
 				&& $this->results->getStatus('Max Upload Filesize') == 1
-				&& $this->results->getStatus('Required Functions') == 1);
+				&& $this->results->getStatus('Required Functions') == 1
+			);
+			
+			$almostallgood = ($this->results->getStatus('Version') == 1
+				&& $this->results->getStatus('Memory Limit') == 1
+				&& $this->results->getStatus('Max Upload Filesize') == 0
+				&& $this->results->getStatus('Required Functions') == 1
+			);
+					
 			$configError = ($this->results->getStatus('Version') == 1
 				|| $this->results->getStatus('Memory Limit') != 1 
 				|| $this->results->getStatus('Max Upload Filesize') != 1
@@ -947,7 +955,13 @@
 			
 			if ( $allgood ) {
 				$this->results->overall(1, 'PHP okay!');
-			} elseif ( $configError ) {
+				return;
+			} else if($almostallgood){
+				$this->results->overall(0, 'PHP almost okay!');
+				return;
+			}
+			
+			if ( $configError ) {
 				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
 				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 4.3.4', false);
@@ -1064,7 +1078,7 @@
 			
 			// get max upload filesize
 			$ulimit = ini_get('upload_max_filesize');
-			
+
 			// good value = default in Typo3 is 10M
 			$good = '10M';
 			$bad = '2M';
