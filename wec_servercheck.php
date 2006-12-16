@@ -724,7 +724,11 @@
 		 * @return void
 		 **/
 		function overall($status, $recommendation = null, $showFailedRecoms = true) {
-			$this->overall['status'] = $status;
+			
+			// if we are at a good status right now, but want to add a worse one, we
+			// want the worst one to show. Before, if a warning was added after a fail,
+			// the whole test would be a warning. So we always show the worst status.
+			if($this->overall['status']) > $status)	$this->overall['status'] = $status;
 			$this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
 		}
