@@ -145,7 +145,7 @@
 		 * @return String
 		 **/
 		function getTestValue($test, $subtest) {
-
+			
 			// run a single test
 			$this->modules[$test]->$subtest();
 
@@ -700,7 +700,7 @@
 		function __construct() {
 			$this->overall = array();
 			$this->overall['showFailed'] = false;
-			$this->overall['status'] = -1;
+			$this->overall['status'] = 2;
 			$this->overall['recommendation'] = array();
 			$this->testResults = array();
 		}
@@ -728,7 +728,7 @@
 			// if we are at a good status right now, but want to add a worse one, we
 			// want the worst one to show. Before, if a warning was added after a fail,
 			// the whole test would be a warning. So we always show the worst status.
-			if($this->overall['status']) > $status)	$this->overall['status'] = $status;
+			if($this->overall['status'] > $status)	$this->overall['status'] = $status;
 			$this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
 		}
@@ -1321,18 +1321,19 @@
 		function evaluate() {
 			
 			$allgood = $this->results->getStatus('symlinks') == 1;
-			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
-			$failnowin = $this->results->getStatus('symlinks') != 1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'OS')));
+			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
+			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
+			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
 			
 			// if no symlink was created and this is windows show warning.
 			if($allgood) {
 				$this->results->overall(1, 'File permissions and symlinks okay!');
 
 			// no symlink was created, but we aren't using Windows; that's not good.
-			} else if($failnowin) {
-				$recom = 'Symlinks couldn\'t be created. The reason for this might be PHPsuExec.';
-				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
-				$this->results->overall(-1, $recom);
+			} else if($warningnowin) {
+				$recom = 'Symlinks can be created, but not read. The reason for this might be PHPsuExec.';
+				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
+				$this->results->overall(0, $recom, false);
 			
 			// using windows
 			} else if ($failwin) {
@@ -1466,13 +1467,18 @@
 			// get headers for the file and symlink we just created
 			$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 			$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-						
+			$headers500 = strpos($sHeaders[0], '500') !== false;	
+
 			// check symlink
 			if(!$sym) {
 				$recom = 'Symlinks couldn\'t be created.';
-				$this->results->test('symlinks', 'Symlinks', 'Problem', 0, $recom);
-			} else if ($sym) {
+				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);
+			} else if ($sym && !$headers500) {
 				$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
+			} else if ($sym && $headers500) {
+				$recom = 'Symlinks can be created, but symlinked files cannot be read, probably
+					due to PHPsuexec.';
+				$this->results->test('symlinks', 'Symlinks', 'Problem', 0, $recom);
 			}
 			
 			// remove the temporary file and folder
@@ -1727,6 +1733,7 @@
 			$this->checkBaseTag();
 			$this->checkHtaccess();
 			$this->checkRealURL();
+			$this->rootSym();
 			$this->checkFileadmin();
 			$this->checkUploads();
 			$this->checkTypo3temp();
@@ -1741,7 +1748,8 @@
 				$this->results->getStatus('checkFileadmin') == 1 &&
 				$this->results->getStatus('checkUploads') == 1 &&
 				$this->results->getStatus('checkTypo3temp') == 1 &&
-				$this->results->getStatus('checkTypo3conf') == 1
+				$this->results->getStatus('checkTypo3conf') == 1 &&
+				$this->results->getStatus('rootSym') == 1
 			);
 			
 			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Tests','checkRewrite') == 1 && 
@@ -1757,12 +1765,24 @@
 				$this->results->getStatus('checkTypo3temp') == 1 &&
 				$this->results->getStatus('checkTypo3conf') == 1
 			);
-			
+			$rootSym = $this->results->getStatus('rootSym') == 1;
+			$rootSymWarn = $this->results->getStatus('rootSym') == 0;
 			// if everything is good, say it and quit
 			if ($allgood) {
 				$this->results->overall(1, 'Everything is alright');
 				return;
 			} 
+			
+			if($rootSym) {
+				$this->results->overall(1);
+			} else if($rootSymWarn) {
+				$recom = 'Internal Server Error when trying to read the TYPO3 main page.';
+				$this->results->overall(0, $recom);
+			} else {
+				$recom = 'The symlink to index.php could not be read, probably due to PHPsuexec. Follow the
+				 instructions below to try and fix this.';
+				$this->results->overall(-1, $recom);
+			}
 			
 			// eval realurl results
 			if ($realurlhtthere) {
@@ -1823,6 +1843,29 @@
 			}
 		}
 		
+		/**
+		 * Checks if the root page can be read via symlink.
+		 *
+		 * @return void
+		 **/
+		function rootSym() {
+						
+			// get headers for TYPO3 root
+			$headers = $this->getHeaders($GLOBALS['scriptPath']);
+			$headers500 = strpos($headers[0], '500') !== false;	
+
+			// check headers
+ 			if (!$headers500) {
+				$this->results->test('rootSym', 'TYPO3 index.php', 'Success', 1);					
+			} else if ($headers500 && $GLOBALS['mc']->getTestStatus('File Permissions', 'symlinks') == 0) {
+				$recom = 'Copy index.php from the typo3/ directory into the TYPO3 root directory.';
+				$this->results->test('rootSym', 'TYPO3 index.php', 'Problem', -1, $recom);
+			} else {
+				$recom = 'There was a Internal Server Error not caused by symlinks. Check the other tests
+				 for details.';
+				$this->results->test('rootSym', 'TYPO3 index.php', 'Problem', 0, $recom);
+			}
+		}
 		/**
 		 * Checks if rewriting in TYPO3 works.
 		 *
