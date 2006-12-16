@@ -1537,7 +1537,7 @@
 				$this->results->overall(-1, $recom);
 			}
 			
-			if ($isApache && $this->results->getStatus('Allow Override') != 1) {
+			if ($isApache && $this->results->getStatus('override') != 1) {
 				$recom = "Overriding settings via .htaccess files is not allowed but reuquired for RealURL to work.
 					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
 				$this->results->overall(-1, $recom, false);
