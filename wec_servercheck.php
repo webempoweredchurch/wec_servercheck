@@ -371,11 +371,12 @@
 		 * @return String
 		 **/
 		function renderAll($results) {
-			$output = null;
+			$output = '<a href="#" onclick="toggle()" id="showhidelink">Show Details</a>';
+			$output .= '<div id="detailed">';
 			foreach($results as $title => $resultsObj) {
 				$output .= $this->render($resultsObj->getTests(), $title);
 			}
-			
+			$output .= '</div>';
 			return $output;
 		}
 		
@@ -438,6 +439,11 @@
 				th {
 					border-bottom: 1px black solid;
 				}
+				
+				#detailed {
+					display: none;
+				}
+				
 				.recomrowfail td{
 					border-top: 1px solid black;
 					border-bottom: 1px solid black;
@@ -460,6 +466,30 @@
 				}
 
 			</style>';
+			
+			$headers .= '<script type="text/javascript">
+				function toggle() {
+					var a = document.getElementById(\'showhidelink\');
+					if(a.innerHTML==\'Hide Details\') {
+						a.innerHTML = \'Show Details\';
+						hide()
+					} else {
+						a.innerHTML = \'Hide Details\';
+						show()
+		
+					}
+				}
+				
+				function hide() {
+					var element = document.getElementById("detailed");
+					element.style.display = "none";
+				}
+				
+				function show() {
+					var element = document.getElementById("detailed");
+					element.style.display = "block";
+				}
+			</script>';
 				
 			return $headers;
 		}
@@ -2073,16 +2103,16 @@
 	//-----------------------------------
 	
 	// register renderers
+	$rc->register('OverallResults');
 	$rc->register('RenderDetailed');
 	$rc->register('RenderPlain');
-	$rc->register('OverallResults');
-	
+
 	// register modules
 	$mc->register('PHP');
 	$mc->register('MySQL');
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
-	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
+	//if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
 	//error_reporting(0);
