@@ -1558,25 +1558,26 @@
 			);
 			$noApacheRewrite = ($this->results->getStatus('checkRewrite') == 1 && !$isApache);
 			$ApacheNoRewrite = ($this->results->getStatus('checkRewrite') != 1 && $isApache);
-
+			
 			// apache but mod_rewrite not found
 			if($allgood) {
 				$this->results->overall(1, 'All works well.', false);
 				return;
 			}
-			echo '<pre>';
-			print_r($this->results->getStatus('checkModRewrite'));
-			echo '</pre>';
+
 			if ($isApache && $this->results->getStatus('checkModRewrite') == -1) {
 				$recom = "The mod_rewrite module is not installed. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->results->overall(-1, $recom, false);
 
-			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0) {
+			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') != 1) {
 				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->results->overall(0, $recom, false);
 			
+			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') == 1) {
+				$this->results->overall(1, 'All works well.', false);
+					
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 1) {
 					$this->results->overall(1);
 				
@@ -2126,7 +2127,7 @@
 	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	//error_reporting(0);
+	error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
