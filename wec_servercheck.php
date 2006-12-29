@@ -240,7 +240,8 @@
 			$show .= $this->printHeaders();
 			$show .= '<title>WEC Server Checker</title>';
 			$show .= '</head><body>';
-
+			$show .= '<h1>Web-Empowered Church Server Checker</h1>';
+			
 			foreach( $this->renderers as $renderer ) {
 				$show .= $renderer->renderAll($this->results);
 			}
@@ -1104,7 +1105,7 @@
 			// else it's too low :(
 			} else {
 				$recom = 'The memory limit is too low.';
-				if($GLOBALS['mc']->getTestStatus('Apache Tests','override') == 1) {
+				if($GLOBALS['mc']->getTestStatus('Apache Web Server Test','override') == 1) {
 					$recom .= 'You can try putting this line in the .htaccess file of your
 						TYPO3 root directory:<br />php_value memory_limit 32M<br />';
 				}
@@ -1356,9 +1357,9 @@
 		function evaluate() {
 			
 			$allgood = $this->results->getStatus('symlinks') == 1;
-			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
-			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
-			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Test', 'checkOS')));
+			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
+			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
+			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
 			
 			// if no symlink was created and this is windows show warning.
 			if($allgood) {
@@ -1555,7 +1556,7 @@
 		}
 		
 		function evaluate() {
-			$isApache = ($GLOBALS['mc']->getTestValue('PHP Test', 'checkServerAPI') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Test', 'checkServerAPI') == 'apache2handler');
+			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache2handler');
 			$allgood = ($isApache && 
 				$this->results->getStatus('checkModRewrite') == 1 && 
 				$this->results->getStatus('checkRewrite') == 1 && 
@@ -1674,7 +1675,7 @@
 		function checkRewrite() {
 			
 			// get minimum file permissions from earlier test
-			$perms = $GLOBALS['mc']->getTestValue('File Permissions','checkW');
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test','checkW');
 			
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
@@ -1728,7 +1729,7 @@
 		function override() {
 			
 			// get minimum file permissions from earlier test
-			$perms = $GLOBALS['mc']->getTestValue('File Permissions','checkW');
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test','checkW');
 			
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
@@ -1799,11 +1800,11 @@
 				$this->results->getStatus('rootSym') == 1
 			);
 			
-			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Tests','checkRewrite') == 1 && 
+			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 && 
 				$this->results->getStatus('checkHtaccess') == 1 &&
 				$this->results->getStatus('checkRealURL') != 1
 			);
-			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Tests','checkRewrite') == 1 && 
+			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 && 
 				$this->results->getStatus('checkHtaccess') != 1 &&
 				$this->results->getStatus('checkRealURL') != 1
 			);
@@ -1904,7 +1905,7 @@
 			// check headers
  			if (!$headers500) {
 				$this->results->test('rootSym', 'TYPO3 index.php', 'Success', 1);					
-			} else if ($headers500 && $GLOBALS['mc']->getTestStatus('File Permissions', 'symlinks') == 0) {
+			} else if ($headers500 && $GLOBALS['mc']->getTestStatus('File Permissions Test', 'symlinks') == 0) {
 				$recom = 'Copy index.php from the typo3/ directory into the TYPO3 root directory.';
 				$this->results->test('rootSym', 'TYPO3 index.php', 'Problem', -1, $recom);
 			} else {
@@ -1944,7 +1945,7 @@
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
 				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
-					Please report this issue on the WEC Support forums.'
+					Please report this issue on the WEC Support forums.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
 
 			// just a fail safe.
@@ -2134,7 +2135,7 @@
 	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	error_reporting(0);
+	//error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
