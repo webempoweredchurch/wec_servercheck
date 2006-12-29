@@ -1546,7 +1546,11 @@
 		
 		function evaluate() {
 			$isApache = ($GLOBALS['mc']->getTestValue('PHP Test', 'checkServerAPI') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Test', 'checkServerAPI') == 'apache2handler');
-			$allgood = ($isApache && $this->results->getStatus('checkModRewrite') == 1 && $this->results->getStatus('checkRewrite') == 1);
+			$allgood = ($isApache && 
+				$this->results->getStatus('checkModRewrite') == 1 && 
+				$this->results->getStatus('checkRewrite') == 1 && 
+				$this->results->getStatus('override') == 1
+			);
 			$noApacheRewrite = ($this->results->getStatus('checkRewrite') == 1 && !$isApache);
 			$ApacheNoRewrite = ($this->results->getStatus('checkRewrite') != 1 && $isApache);
 
@@ -1555,16 +1559,21 @@
 				$this->results->overall(1, 'All works well.', false);
 				return;
 			}
-			
-			 if ($isApache && $this->results->getStatus('checkModRewrite') == -1) {
+			echo '<pre>';
+			print_r($this->results->getStatus('checkModRewrite'));
+			echo '</pre>';
+			if ($isApache && $this->results->getStatus('checkModRewrite') == -1) {
 				$recom = "The mod_rewrite module is not installed. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->results->overall(-1, $recom, false);
 
-			} else if($isApache && $this->results->getStatus('checkModRewrite') != -1) {
+			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0) {
 				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
 				$this->results->overall(0, $recom, false);
+			
+			} else if($isApache && $this->results->getStatus('checkModRewrite') == 1) {
+					$this->results->overall(1);
 				
 			} else if($noApacheRewrite) {
 				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
@@ -1578,7 +1587,7 @@
 			}
 			
 			if ($isApache && $this->results->getStatus('override') != 1) {
-				$recom = "Overriding settings via .htaccess files is not allowed but reuquired for RealURL to work.
+				$recom = "Overriding settings via .htaccess files is not allowed but required for RealURL to work.
 					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
 				$this->results->overall(-1, $recom, false);
 			}
@@ -1713,11 +1722,8 @@
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
 			
-			// this goes into the .htaccess file
-			$htaccess = "AuthType Basic \n
-			AuthName \"Tester\" \n
-			AuthUserFile / \n
-			Require valid-user";
+			// syntax error in .htaccess
+			$htaccess = "SecFEng On";
 			
 			// write our htaccess file
 			$fileHandle = fopen('test123/.htaccess', 'w+');
@@ -1726,8 +1732,8 @@
 			
 			// Now check headers on the real file...
 			$headers = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
-			
-			if(strpos($headers[0], '401 Authorization Required') !== false) {
+
+			if(strpos($headers[0], '500 Internal Server Error') !== false) {
 				$this->results->test('override', 'Allow Override', 'Success', 1);
 			} else {
 				$recom = 'Overriding Apache settings with .htaccess files is not allowed.';
@@ -2112,7 +2118,7 @@
 	$mc->register('MySQL');
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
-	//if($GLOBALS['t3installed']) $mc->register('TYPO3');	
+	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
 	//error_reporting(0);
