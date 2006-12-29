@@ -1370,6 +1370,11 @@
 				$recom = 'Symlinks couldn\'t be created. This is perfectly normal since the server is running Windows.';
 				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
 				$this->results->overall(1, $recom, false);
+
+			} else if ($failnowin) {
+				$recom = 'Symlinks couldn\'t be created even though you are not using Windows.';
+				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
+				$this->results->overall(-1, $recom, false);
 			}
 
 		}
