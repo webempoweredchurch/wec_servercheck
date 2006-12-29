@@ -414,11 +414,11 @@
 		 **/
 		function getStatus($status) {
 			if($status == 1) {
-				return '<span style="color: green;">Passed!</span>';
+				return '<span style="color: green;">Passed</span>';
 			} else if ($status == 0) {
-				return '<span style="color: orange;">Warning!</span>';
+				return '<span style="color: orange;">Warning</span>';
 			} else if ($status == -1) {
-				return '<span style="color: red;">Failed!</span>';
+				return '<span style="color: red;">Failed</span>';
 			}
 		}
 		
@@ -579,11 +579,11 @@
 		 **/
 		function getStatus($status) {
 			if($status == 1) {
-				return 'Passed!';
+				return 'Passed';
 			} else if ($status == 0) {
-				return 'Warning!';
+				return 'Warning';
 			} else if ($status == -1) {
-				return 'Failed!';
+				return 'Failed';
 			}
 		}
 	}
@@ -676,11 +676,11 @@
 		 **/
 		function getStatus($status) {
 			if($status == 1) {
-				return '<span style="color: green;">Passed!</span>';
+				return '<span style="color: green;">Passed</span>';
 			} else if ($status == 0) {
-				return '<span style="color: orange;">Warning!</span>';
+				return '<span style="color: orange;">Warning</span>';
 			} else if ($status == -1) {
-				return '<span style="color: red;">Failed!</span>';
+				return '<span style="color: red;">Failed</span>';
 			}
 		}
 		
@@ -964,7 +964,7 @@
 		function __construct() {
 			parent::__construct();
 
-			$this->title = "PHP Test";
+			$this->title = "PHP Scripting Test";
 		}
 		
 		
@@ -997,10 +997,10 @@
 			$wrongVersion = $this->results->getStatus('checkVersion') != 1;
 			
 			if ( $allgood ) {
-				$this->results->overall(1, 'PHP okay!');
+				$this->results->overall(1, 'PHP is okay!');
 				return;
 			} else if($almostallgood){
-				$this->results->overall(0, 'PHP almost okay!');
+				$this->results->overall(0, 'PHP is nearly okay!');
 				return;
 			}
 			
@@ -1029,13 +1029,13 @@
 			
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
 			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion == 0) {
-				$recom = 'There are a few severe bugs in PHP 5.2.0 that prevent TYPO3 from working correctly.
+				$recom = 'There are a few severe issues with PHP 5.2.0 that prevent TYPO3 from working correctly.
 					Please either upgrade to a higher version or downgrade to a lower version.';
 				$this->results->test('checkVersion', 'Version', $version, 0, $recom);			
 			} else if ($majorVersion == 4 || $majorVersion == 5) {
 				$this->results->test('checkVersion', 'Version', $version, 1);
 			} else {
-				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version is too low!");				
+				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version number is too low!");				
 			}
 		}
 		
@@ -1108,8 +1108,8 @@
 					$recom .= 'You can try putting this line in the .htaccess file of your
 						TYPO3 root directory:<br />php_value memory_limit 32M<br />';
 				}
-				$recom .= 'If you have access to your php.ini, please set it to at least 32M or ask your
-				host to do so if you don\'t have access to it.';
+				$recom .= 'If you have access to the php.ini configuration file, please set the memory_limit
+					to at least 32M or ask your hosting company to do so.';
 					
 				$this->results->test('checkMemoryLimit', 'Memory Limit', $mlimit, -1, $recom);
 			}
@@ -1141,10 +1141,14 @@
 			if($bytes >= $gbytes) {
 				$this->results->test('checkUploadLimit', 'Max Upload Filesize', $ulimit, 1);
 			} else if ($bytes < $bbytes) {
-				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise it to at least 10M.';
+				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise 
+					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
+					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, -1, $recom);
 			} else {
-				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising it to 10M.';
+				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising 
+					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
+					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			}
 			
@@ -1184,8 +1188,9 @@
 			if($output) {
 				$this->results->test('checkFunctions', 'Required Functions', 'success', 1);
 			} else {
-				$recom = 'Could not use exec() on this server. Please check with your host and make sure that the
-					use of exec() is allowed.';
+				$recom = 'Could not use the exec() PHP function on this server. Please check with your
+				 hosting company and to make sure that the 	use of the exec() function is allowed because
+				 it is needed for some TYPO3 features.';
 				$this->results->test('checkFunctions', 'Required Functions', 'failed', -1, $recom);
 			}
 		}
@@ -1203,7 +1208,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = "MySQL Test";
+			$this->title = "MySQL Database Test";
 			$this->running = false;
 		}
 		
@@ -1228,9 +1233,9 @@
 				$recom = 'Testing not possible.';
 				$this->results->overall(0, $recom);				
 			} else if ($notrunning) {
-				$this->results->overall(-1, 'MySQL doesn\'t seem to be running.', false);				
+				$this->results->overall(-1, 'MySQL doesn\'t appear to be running.', false);				
 			} elseif($allgood) {
-				$this->results->overall(1, 'All good!');				
+				$this->results->overall(1, 'MySQL is okay');				
 			} else {
 				$this->results->overall(-1, 'There have been errors:');
 			}
@@ -1292,8 +1297,8 @@
 			
 			// check if user has entered their information
 			if(empty($GLOBALS['dbUser']) && empty($GLOBALS['dbPass'])) {
-				$recom = 'Please edit the top of this file and enter your database information
-					as provided by your host.';
+				$recom = 'Please edit the top of this file and enter your database information 
+				as provided by your hosting company or system manager.';
 				$this->results->test('checkStatus', 'Status', 'Missing Information', 0, $recom);
 				return;
 			}
@@ -1339,7 +1344,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = 'File Permissions';
+			$this->title = 'File Permissions Test';
 		}
 		
 		function check() {
@@ -1361,7 +1366,7 @@
 
 			// no symlink was created, but we aren't using Windows; that's not good.
 			} else if($warningnowin) {
-				$recom = 'Symlinks can be created, but not read. The reason for this might be PHPsuExec.';
+				$recom = 'Symlinks can be created, but not read. The reason for this might be that PHPsuExec is installed.';
 				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
 				$this->results->overall(0, $recom, false);
 			
@@ -1406,7 +1411,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->results->test('checkW', 'Minimum write permissions', "N/A", -1, 'Could not create temporary folder; check permissions.');
+					$this->results->test('checkW', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
 					return;
 				}
 				
@@ -1452,7 +1457,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->results->test('checkR', 'Minimum write permissions', "N/A", -1, 'Could not create temporary folder;check permissions.');
+					$this->results->test('checkR', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
 					return;
 				}
 
@@ -1511,8 +1516,8 @@
 			} else if ($sym && !$headers500) {
 				$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
 			} else if ($sym && $headers500) {
-				$recom = 'Symlinks can be created, but symlinked files cannot be read, probably
-					due to PHPsuexec.';
+				$recom = 'Symlinks can be created, but symlinked files cannot be read. The 
+					reason for this might be that PHPsuExec is installed.';
 				$this->results->test('symlinks', 'Symlinks', 'Problem', 0, $recom);
 			}
 			
@@ -1537,7 +1542,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = 'Apache Tests';
+			$this->title = 'Apache Web Server Test';
 		}
 		
 		function check() {
@@ -1561,18 +1566,18 @@
 			
 			// apache but mod_rewrite not found
 			if($allgood) {
-				$this->results->overall(1, 'All works well.', false);
+				$this->results->overall(1, 'The Apache Web Server and the RealURL extension should work correctly.', false);
 				return;
 			}
 
 			if ($isApache && $this->results->getStatus('checkModRewrite') == -1) {
 				$recom = "The mod_rewrite module is not installed. It's necessary for the RealURL extension, so if you are
-					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+					having problems with your TYPO3 site URLs, try uninstalling the extension in the extension manager.";
 				$this->results->overall(-1, $recom, false);
 
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') != 1) {
 				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
-					having problems with your TYPO3 site, try uninstalling the extension in the extension manager.";
+					having problems with your TYPO3 site URLs, try uninstalling the extension in the extension manager.";
 				$this->results->overall(0, $recom, false);
 			
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') == 1) {
@@ -1585,10 +1590,10 @@
 				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
 				$this->results->overall(1, $recom, false);
 			} else if($ApacheNoRewrite) {
-				$recom = 'For some odd reason rewrite didn\'t work. Please report this.';
+				$recom = 'For some odd reason rewrite didn\'t work. Please report this to the WEC Support forum.';
 				$this->results->overall(-1, $recom);
 			} else {
-				$recom = 'Rewriting URLs didn\'t work at all. Please report this.';
+				$recom = 'Rewriting URLs didn\'t work at all. Please report this to the WEC Support forum.';
 				$this->results->overall(-1, $recom);
 			}
 			
@@ -1609,8 +1614,8 @@
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
 			if(function_exists('apache_get_modules') && in_array('mod_security', apache_get_modules())) {
-				$recom = 'mod_security isn\'t compatible with some of TYPO3\'s features. Try putting "SecFilterEngine Off"
-					without quotes into your .htaccess file in your TYPO3 root.';
+				$recom = 'mod_security isn\'t compatible with some of TYPO3\'s features. Try adding the line "SecFilterEngine Off"
+					without quotes to the .htaccess file in your TYPO3 root.';
 				$this->results->test('checkModSecurity', 'mod_security', 'present', 0, $recom);
 			} else {
 				$this->results->test('checkModSecurity', 'mod_security', 'not found', 1);
@@ -1634,7 +1639,7 @@
 					$this->results->test('checkModRewrite', 'mod_rewrite', 'not found', -1);
 				}
 			} else {
-				$this->results->test('checkModRewrite', 'mod_rewrite', 'cannot determine', 0);		
+				$this->results->test('checkModRewrite', 'mod_rewrite', 'unable to determine this setting due to the server configuration', 0);		
 			}
 		}
 		
@@ -1767,7 +1772,7 @@
 		function __construct() {
 			parent::__construct();
 			
-			$this->title = 'TYPO3 Tests';
+			$this->title = 'TYPO3 Test';
 		}
 		
 		function check() {
@@ -1821,7 +1826,7 @@
 				$recom = 'Internal Server Error when trying to read the TYPO3 main page.';
 				$this->results->overall(0, $recom);
 			} else {
-				$recom = 'The symlink to index.php could not be read, probably due to PHPsuexec. Follow the
+				$recom = 'The symlink to index.php could not be read, probably because PHPsuexec is installed. Follow the
 				 instructions below to try and fix this.';
 				$this->results->overall(-1, $recom);
 			}
@@ -1832,14 +1837,14 @@
 					copied the correct .htaccess file from the WEC Starter Package to your TYPO3 root directory.";
 				$this->results->overall(-1, $recom);
 			} else if ($realurlhtnotthere) {
-				$recom = "RealURL didn't work because the .htaccess file is missing. Make sure you
-					copied it from the WEC Starter Package to your TYPO3 root directory.";
+				$recom = "RealURL didn't work because the .htaccess file is missing. Please copy
+				 it from the WEC Starter Package to your TYPO3 root directory.";
 				$this->results->overall(-1, $recom);
 			}
 			
 			// eval directory results
 			if(!$directories) {
-				$recom = 'Some directories weren\'t writable. Please check permissions on those.';
+				$recom = 'Some directories weren\'t writable. Please check the directory permissions.';
 				$this->results->overall(-1, $recom);
 			}
 			
@@ -1938,7 +1943,9 @@
 			
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
-				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, 'Test couldn\'t be run. Wrong pid.');
+				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
+					Please report this issue on the WEC Support forums.'
+				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
 
 			// just a fail safe.
 			} else {
@@ -1967,7 +1974,7 @@
 			
 			// if it couldn't be written, display a warning
 			if($write === false) {
-				$recom = 'Could not write to the fileadmin directory.';
+				$recom = 'Could not write to the fileadmin directory. Please check the directory permissions.';
 				$this->results->test('checkFileadmin', 'fileadmin', 'not writable', 0, $recom);
 				return null;
 			}
@@ -1979,7 +1986,7 @@
 			if(strpos($headers[0], '200 OK')) {
 				$this->results->test('checkFileadmin', 'fileadmin', 'readable and writable', 1);
 			} else {
-				$recom = 'File couldn\'t be read, check file permissions.';
+				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkFileadmin', 'fileadmin', 'Could not access file over HTTP.', 0, $recom);
 			}
 			
@@ -2008,7 +2015,7 @@
 			
 			// if it couldn't be written, display a warning
 			if($write === false) {
-				$recom = 'Could not write to the typo3conf directory.';
+				$recom = 'Could not write to the typo3conf directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3conf', 'typo3conf', 'not writable', 0, $recom);
 				return null;
 			}
@@ -2020,7 +2027,7 @@
 			if(strpos($headers[0], '200 OK')) {
 				$this->results->test('checkTypo3conf', 'typo3conf', 'readable and writable', 1);
 			} else {
-				$recom = 'File couldn\'t be read, check file permissions.';
+				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkTypo3conf', 'typo3conf', 'Could not access file over HTTP.', 0, $recom);
 			}
 			
@@ -2049,7 +2056,7 @@
 			
 			// if it couldn't be written, display a warning
 			if($write === false) {
-				$recom = 'Could not write to the typo3temp directory.';
+				$recom = 'Could not write to the typo3temp directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3temp', 'typo3temp', 'not writable', 0, $recom);
 				return null;
 			}
@@ -2061,7 +2068,7 @@
 			if(strpos($headers[0], '200 OK')) {
 				$this->results->test('checkTypo3temp', 'typo3temp', 'readable and writable', 1);
 			} else {
-				$recom = 'File couldn\'t be read, check file permissions.';
+				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkTypo3temp', 'typo3temp', 'Could not access file over HTTP.', 0, $recom);
 			}
 			
@@ -2089,7 +2096,7 @@
 			
 			// if it couldn't be written, display a warning
 			if($write === false) {
-				$recom = 'Could not write to the uploads directory.';
+				$recom = 'Could not write to the uploads directory. Please check the directory permissions.';
 				$this->results->test('checkUploads', 'uploads', 'not writable', 0, $recom);
 				return null;
 			}
@@ -2101,7 +2108,7 @@
 			if(strpos($headers[0], '200 OK')) {
 				$this->results->test('checkUploads', 'uploads', 'readable and writable', 1);
 			} else {
-				$recom = 'File couldn\'t be read, check file permissions.';
+				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkUploads', 'uploads', 'Could not access file over HTTP.', 0, $recom);
 			}
 			
