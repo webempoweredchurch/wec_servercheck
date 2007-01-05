@@ -1734,6 +1734,14 @@
 			// create temp folder to create .htaccess file in.
 			mkdir('test123', octdec($perms));
 			
+			// write empty index.html file
+			$fileHandle = fopen('test123/index.html', 'w+');
+			$bla = fwrite($fileHandle, '');
+			fclose($fileHandle);
+			
+			// Now check headers without .htaccess file
+			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
+
 			// syntax error in .htaccess
 			$htaccess = "SecFEng On";
 			
@@ -1742,10 +1750,11 @@
 			$bla = fwrite($fileHandle, $htaccess);
 			fclose($fileHandle);
 			
-			// Now check headers on the real file...
-			$headers = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
+			// check headers with .htaccess file
+			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
 
-			if(strpos($headers[0], '500 Internal Server Error') !== false) {
+			// if the headers are different, overriding via .htaccess should work
+			if($aHeaders[0] != $bHeaders[0]) {
 				$this->results->test('override', 'Allow Override', 'Success', 1);
 			} else {
 				$recom = 'Overriding Apache settings with .htaccess files is not allowed.';
@@ -1754,6 +1763,7 @@
 			
 			// clean up
 			unlink('test123/.htaccess');
+			unlink('test123/index.html');
 			rmdir('test123');	
 		}
 	}
