@@ -1548,15 +1548,24 @@
 		}
 		
 		function check() {
-			$this->checkVersion();
-			$this->checkModRewrite();
-			$this->checkModSecurity();
-			$this->override();
-			$this->checkRewrite();
+			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkW') === 1) {
+				$this->checkVersion();
+				$this->checkModRewrite();
+				$this->checkModSecurity();
+				$this->override();
+				$this->checkRewrite();				
+			}
 
 		}
 		
 		function evaluate() {
+			
+			// if there are file permissions errors, don't bother doing these tests
+			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkW') !== 1) {
+				$this->results->overall(-1, 'Please fix the file permissions first.', false);
+				return;
+			}
+			
 			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache2handler');
 			$allgood = ($isApache && 
 				$this->results->getStatus('checkModRewrite') == 1 && 
@@ -2146,7 +2155,7 @@
 	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
-	//error_reporting(0);
+	error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
