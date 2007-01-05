@@ -1378,8 +1378,9 @@
 				$this->results->overall(1, $recom, false);
 
 			} else if ($failnowin) {
-				$recom = 'Symlinks couldn\'t be created even though you are not using Windows.';
-				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
+				$recom = 'Symlinks couldn\'t be created even though you are not using Windows. Please check the
+					permissions on the folder this script is installed in and make sure it is allowed to write to it.';
+				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
 				$this->results->overall(-1, $recom, false);
 			}
 
@@ -1456,9 +1457,9 @@
 			
 				$out = mkdir('tmp', octdec($perm));			
 
-				// if that didn't work we have a problem
+				// if that didn't work we have a problem but don't need to add an error because the 
+				// write permission test failed as well.
 				if(!$out) {
-					$this->results->test('checkR', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
 					return;
 				}
 
