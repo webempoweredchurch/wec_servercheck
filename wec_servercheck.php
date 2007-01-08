@@ -1349,14 +1349,15 @@
 		}
 		
 		function check() {
-			$this->checkW();
-			$this->checkR();
+			$this->check777();
+			$this->checkTempPermissions();
+			// $this->checkR();
 			$this->symlinks();
 		}
 		
 		function evaluate() {
 			
-			$allgood = $this->results->getStatus('symlinks') == 1;
+			$allgood = $this->results->getStatus('symlinks') == 1 && $this->results->getStatus('checkTempPermissions') == 1;
 			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
 			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
 			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
@@ -1383,6 +1384,15 @@
 				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
 				$this->results->overall(-1, $recom, false);
 			}
+			
+			if($this->results->getStatus('checkTempPermissions') == 0) {
+				$recom = "Cannot determine file permissions needed by this script because required PHP functions aren't
+					allowed. Please see the PHP Scripting Test results for more info.";
+				$this->results->overall(0, $recom, false);				
+			} else if ($this->results->getStatus('checkTempPermissions') == -1) {
+				$recom = "This script is unable to create temporary folders. Please make sure file permissions are correct.";
+				$this->results->overall(-1, $recom, false);
+			}
 
 		}
 		/**
@@ -1390,10 +1400,10 @@
 		 *
 		 * @return void
 		 **/
-		function checkW() {
+		function checkTempPermissions() {
 
 			// define permissions we want to test
-			$perms = array('0777', '0775', '0755', '0744');
+			$perms = array('0777', '0775', '0755');
 
 			// clear file cache just to be sure
 			clearstatcache();
@@ -1413,7 +1423,7 @@
 
 				// if that didn't work we have a problem
 				if(!$out) {
-					$this->results->test('checkW', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
+					$this->results->test('checkTempPermissions', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
 					return;
 				}
 				
@@ -1423,7 +1433,7 @@
 				// if write was successful, save the file permissions in the results. It will 
 				// overwrite this until one of them doesn't work, and leave it at the minimum
 				// that did work which is exactly what we want.
-				if($test) $this->results->test('checkW', 'Minimum write permissions', $perm, 1);
+				if($test) $this->results->test('checkTempPermissions', 'Minimum write permissions', $perm, 1);
 
 				// remove the temporary file and folder
 				unlink('tmp/test.php');
@@ -1433,66 +1443,65 @@
 		}
 		
 		/**
-		 * Creates a temporary file and tries to read it over HTTP.
+		 * Checks if 777 permissions will work.
 		 *
 		 * @return void
 		 **/
-		function checkR() {
-			  // define permissions we want to test
-			$perms = array('0777', '0775', '0755', '0744');
-
-			// clear file cache just to be sure
-			clearstatcache();
-
-			// check if tmp dir already exists for some crazy reason and delete it
-			// and everything in it.
-			if(file_exists('tmp')) {
-				foreach(glob('tmp/*') as $file) {
-					unlink($file);					
-				}
-				rmdir('tmp');
+		function check777() {
+			
+			// if we cannot exec, show warning
+			if($GLOBALS['mc']->getTestStatus('PHP Scripting Test', 'checkFunctions') !== 1) {
+				$this->results->test('check777', '777 Permissions allowed', 'Can\'t determine', 0);
+				return;
 			}
 			
-			foreach($perms as $perm) {
+			// create temp directory
+			$out = mkdir('tmp', octdec('0775'));	
+							
+			// create a temp file that we can read over http.
+			$fileHandle = fopen('tmp/test.php', 'w+');
+			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
+			fclose($fileHandle);
 			
-				$out = mkdir('tmp', octdec($perm));			
-
-				// if that didn't work we have a problem but don't need to add an error because the 
-				// write permission test failed as well.
-				if(!$out) {
-					return;
-				}
-
-				// if the previous did work, create a temp file that we can read over http.
-				$fileHandle = fopen('tmp/test.php', 'w+');
-				$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
-				fclose($fileHandle);
-						
-				// get headers for the file we just created
-				$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-				
-				// check for good headers from file, if they are, output, if not, it's bad!
-				if(strpos($headers[0], "200 OK") !== false) {
-					$this->results->test('checkR', 'Minimum read permissions', $perm, 1);
-				} else {
-					$this->results->test('checkR', 'Minimum read permissions', $perm, -1, "Reading file failed. Headers were: " . $headers[0]);
-				}
-				
-				// remove the temporary file and folder
-				unlink('tmp/test.php');
-				rmdir('tmp');
+			// get headers for the file we just created
+			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
+			
+			// chmod the file to 777
+			$ret = exec('chmod 777 tmp/test.php');
+			
+			// get headers for the chmodded file
+			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
+			
+			echo '<pre>';
+			print_r($bHeaders);
+			echo '</pre>';
+			echo '<pre>';
+			print_r($aHeaders);
+			echo '</pre>';
+			
+			// compare both headers and pass test if they are the same
+			if($bHeaders[0] = $aHeaders[0]) {
+				$this->results->test('check777', '777 Permissions allowed', 'Yes', 1);
+			} else {
+				$this->results->test('check777', '777 Permissions allowed', 'No', -1, "Reading file failed. Headers were: " . $bHeaders[0]);
 			}
-		}	
-		
+			
+			// remove the temporary file and folder
+			unlink('tmp/test.php');
+			rmdir('tmp');
+			
+		}
+
 		/**
 		 * Check whether symlinks work
 		 *
 		 * @return void
 		 **/
 		function symlinks() {
-			$perm = $this->results->getValue('checkW');
+			
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir('tmp', octdec($perm));			
+			$out = mkdir('tmp', octdec($perms));		
 
 			// create a temp file that we can read over http.
 			$fileHandle = fopen('tmp/test.php', 'w+');
@@ -1548,7 +1557,7 @@
 		}
 		
 		function check() {
-			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkW') === 1) {
+			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkTempPermissions') === 1) {
 				$this->checkVersion();
 				$this->checkModRewrite();
 				$this->checkModSecurity();
@@ -1561,7 +1570,7 @@
 		function evaluate() {
 			
 			// if there are file permissions errors, don't bother doing these tests
-			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkW') !== 1) {
+			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkTempPermissions') !== 1) {
 				$this->results->overall(-1, 'Please fix the file permissions first.', false);
 				return;
 			}
@@ -1683,13 +1692,11 @@
 		 * @return void
 		 **/
 		function checkRewrite() {
-			
-			// get minimum file permissions from earlier test
-			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test','checkW');
-			
-			// create temp folder to create .htaccess file in.
-			mkdir('test123', octdec($perms));
-			
+
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
+
+			$out = mkdir('test123', octdec($perms));
+
 			// this goes into the .htaccess file
 			$htaccess = "<IfModule mod_rewrite.c> \n
 			Options +FollowSymlinks \n
@@ -1738,11 +1745,9 @@
 		 **/
 		function override() {
 			
-			// get minimum file permissions from earlier test
-			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test','checkW');
+			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 			
-			// create temp folder to create .htaccess file in.
-			mkdir('test123', octdec($perms));
+			$out = mkdir('test123', octdec($perms));
 			
 			// write empty index.html file
 			$fileHandle = fopen('test123/index.html', 'w+');
