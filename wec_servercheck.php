@@ -1361,17 +1361,22 @@
 			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
 			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
 			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
-			
+			$phpsuexec = $this->results->getValue('check777') == 'No';
+
 			// if no symlink was created and this is windows show warning.
 			if($allgood) {
 				$this->results->overall(1, 'File permissions and symlinks okay!');
 
-			// no symlink was created, but we aren't using Windows; that's not good.
-			} else if($warningnowin) {
-				$recom = 'Symlinks can be created, but not read. The reason for this might be that PHPsuExec is installed.';
+			// no symlink was created, we'ren ot using windows, but PHPsuExec.
+			} else if($warningnowin && $phpsuexec) {
+				$recom = 'Symlinks can be created, but not read. The reason for this is that PHPsuExec is installed.';
 				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
 				$this->results->overall(0, $recom, false);
-			
+			// no symlink was created, but we aren't using Windows or PHPsuExec; that's not good.
+			} else if($warningnowin && $phpsuexec) {
+				$recom = 'Symlinks can be created, but not read. The reason for this is unknown. Please post the 
+				test results and server configuration, if known, to the WEC Install forum (see link below).';
+				$this->results->overall(0, $recom, false);
 			// using windows
 			} else if ($failwin) {
 				$recom = 'Symlinks couldn\'t be created. This is perfectly normal since the server is running Windows.';
@@ -1471,19 +1476,12 @@
 			
 			// get headers for the chmodded file
 			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-			
-			echo '<pre>';
-			print_r($bHeaders);
-			echo '</pre>';
-			echo '<pre>';
-			print_r($aHeaders);
-			echo '</pre>';
-			
+
 			// compare both headers and pass test if they are the same
-			if($bHeaders[0] = $aHeaders[0]) {
+			if($bHeaders[0] == $aHeaders[0]) {
 				$this->results->test('check777', '777 Permissions allowed', 'Yes', 1);
 			} else {
-				$this->results->test('check777', '777 Permissions allowed', 'No', -1, "Reading file failed. Headers were: " . $bHeaders[0]);
+				$this->results->test('check777', '777 Permissions allowed', 'No', 1);
 			}
 			
 			// remove the temporary file and folder
@@ -1519,11 +1517,21 @@
 			$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 			$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
 			$headers500 = strpos($sHeaders[0], '500') !== false;	
-
+			$phpsuexec = $this->results->getStatus('check777');
+			
 			// check symlink
 			if(!$sym) {
 				$recom = 'Symlinks couldn\'t be created.';
 				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);
+			} else if ($sym && $phpsuexec) {
+				if($GLOBALS['t3installed']) {
+					$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
+				} else {
+					$recom = 'When you install TYPO3, either use the .zip package or make sure that you copy the 
+					index.php file from typo3_src to the TYPO3 root.';
+					$this->results->test('symlinks', 'Symlinks', 'Success', 0, $recom);
+				}
+
 			} else if ($sym && !$headers500) {
 				$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
 			} else if ($sym && $headers500) {
@@ -1575,7 +1583,10 @@
 				return;
 			}
 			
-			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache' || $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache2handler');
+			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache' 
+				|| $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache2handler'
+				|| $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'cgi'
+			);
 			$allgood = ($isApache && 
 				$this->results->getStatus('checkModRewrite') == 1 && 
 				$this->results->getStatus('checkRewrite') == 1 && 
@@ -1930,7 +1941,7 @@
 			// check headers
  			if (!$headers500) {
 				$this->results->test('rootSym', 'TYPO3 index.php', 'Success', 1);					
-			} else if ($headers500 && $GLOBALS['mc']->getTestStatus('File Permissions Test', 'symlinks') == 0) {
+			} else if ($headers500 && $GLOBALS['mc']->getTestResult('File Permissions Test', 'check777') == 'No') {
 				$recom = 'Copy index.php from the typo3/ directory into the TYPO3 root directory.';
 				$this->results->test('rootSym', 'TYPO3 index.php', 'Problem', -1, $recom);
 			} else {
@@ -1972,7 +1983,7 @@
 				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
 					Please report this issue on the WEC Support forums.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
-
+			
 			// just a fail safe.
 			} else {
 				$this->results->test('checkRealURL', 'RealURL', 'Failed', -1, 'Unknown error. Headers: ' . $rheaders[0] . '<br />' . $vheaders[0]);
