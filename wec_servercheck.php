@@ -1175,9 +1175,10 @@
 					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			} else if ($postBytes < $bytes) {
-				$recom = 'Max upload file size is larger than allowed POST data('.$postLimit.'). Consider raising 
-					post_max_size to at least upload_max_filesize. This can be set in the php.ini configuration
-					file if you can access it, or ask your hosting company to do so.';
+				$recom = 'Max upload file size ('.$ulimit.') is larger than allowed POST data ('.$postLimit.'). 
+					This is okay, but the upload filesize will be limited to '.$postLimit.'. Consider raising 
+					post_max_size to at least '.$ulimit.' to take advantage of larger file uploads. This can be 
+					set in the php.ini configuration file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			}
 		}
