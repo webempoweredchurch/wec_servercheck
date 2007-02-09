@@ -972,6 +972,7 @@
 		function check() {
 			$this->checkVersion();
 			$this->checkServerAPI();
+			$this->checkExecTime();
 			$this->checkOS();
 			$this->checkMemoryLimit();
 			$this->checkUploadLimit();
@@ -982,6 +983,7 @@
 			$allgood = ($this->results->getStatus('checkVersion') == 1
 				&& $this->results->getStatus('checkMemoryLimit') == 1
 				&& $this->results->getStatus('checkUploadLimit') == 1
+				&& $this->results->getStatus('checkExecTime') == 1
 				&& $this->results->getStatus('checkFunctions') == 1
 			);
 			
@@ -994,9 +996,10 @@
 			$configError = ($this->results->getStatus('checkVersion') == 1
 				|| $this->results->getStatus('checkMemoryLimit') != 1 
 				|| $this->results->getStatus('checkUploadLimit') != 1
+				|| $this->results->getStatus('checkExecTime') != 1
 				|| $this->results->getStatus('checkFunctions') != 1);
 			$wrongVersion = $this->results->getStatus('checkVersion') == -1;
-			$badVersion = $this->results->getStatus('checkVersion') == 0
+			$badVersion = $this->results->getStatus('checkVersion') == 0;
 			
 			if ( $allgood ) {
 				$this->results->overall(1, 'PHP is okay!');
@@ -1062,6 +1065,22 @@
 		}
 		
 		/**
+		 * Checks for maximum execution time
+		 *
+		 * @return void
+		 **/
+		function checkExecTime() {
+			$maxExecTime = ini_get('max_execution_time');
+
+			if($maxExecTime >= 30) {
+				$this->results->test('checkExecTime', 'Max Execution Time', $maxExecTime, 1);
+			} else {
+				$recom = 'The max_execution_time is too low. Please set it to at least 30 seconds.';
+				$this->results->test('checkExecTime', 'Max Execution Time', $maxExecTime, 0, $recom);
+			}
+		}
+		
+		/**
 		 * Checks the OS the server is running.
 		 *
 		 * @return void
@@ -1081,7 +1100,6 @@
 		
 		/**
 		 * Checks the memory limit.
-		 * TODO: compare memory limit in bytes
 		 * @return void
 		 **/
 		function checkMemoryLimit() {
@@ -1129,12 +1147,14 @@
 			
 			// get max upload filesize
 			$ulimit = ini_get('upload_max_filesize');
-
+			$postLimit = ini_get('post_max_size');
+			
 			// good value = default in Typo3 is 10M
 			$good = '10M';
 			$bad = '2M';
 			
 			// convert both to bytes
+			$postBytes = $this->returnBytes($postLimit);
 			$bytes = $this->returnBytes($ulimit);
 			$gbytes = $this->returnBytes($good);
 			$bbytes = $this->returnBytes($bad);
@@ -1142,20 +1162,24 @@
 			// if more than good, all good.
 			// else if lower than min, fail.
 			// else it could still be okay, warning.
-			if($bytes >= $gbytes) {
+			if($bytes >= $gbytes && $postBytes >= $bytes) {
 				$this->results->test('checkUploadLimit', 'Max Upload Filesize', $ulimit, 1);
 			} else if ($bytes < $bbytes) {
 				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise 
 					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
 					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, -1, $recom);
-			} else {
+			} else if ($bytes < $gbytes){
 				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising 
 					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
 					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
+			} else if ($postBytes < $bytes) {
+				$recom = 'Max upload file size is larger than allowed POST data('.$postLimit.'). Consider raising 
+					post_max_size to at least upload_max_filesize. This can be set in the php.ini configuration
+					file if you can access it, or ask your hosting company to do so.';
+				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			}
-			
 		}
 		
 		/**
@@ -1226,7 +1250,8 @@
 		function check() {
 			$this->checkStatus();
 			$this->checkClient();			
-
+			$this->checkSafeMode();
+			
 			if($this->running) {				
 				$this->checkPersistentConnection();
 				$this->checkServer();
@@ -1236,7 +1261,8 @@
 		
 		function evaluate() {
 			$noinfo = $this->results->getStatus('checkStatus') == 0;
-			$allgood = $this->running && $this->results->getStatus('checkPersistentConnection') == 1;
+			$allgood = $this->running && $this->results->getStatus('checkPersistentConnection') == 1
+				&& $this->results->getStatus('checkSafeMode') == 1;
 			$notrunning = !$this->running;
 			
 			if ($noinfo) {
@@ -1262,7 +1288,21 @@
 			$this->results->test('checkHost', 'Host Info', $host, 1);
 		}
 		
-		
+		/**
+		 * Checks whether we are running SQL safe mode
+		 *
+		 * @return void
+		 **/
+		function checkSafeMode() {
+			$safe = ini_get('sql.safe_mode');
+			
+			if(!$safe) {
+				$this->results->test('checkSafeMode', 'SQL Safe Mode', $version, 1);
+			} else {
+				$recom = 'SQL is running in Safe Mode. Make sure that sql.safe_mode is turned to off in your php.ini.';
+				$this->results->test('checkSafeMode', 'SQL Safe Mode', $version, -1, $recom);
+			}
+		}
 		/**
 		 * Checks the MySQL client version
 		 *
