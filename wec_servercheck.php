@@ -995,7 +995,8 @@
 				|| $this->results->getStatus('checkMemoryLimit') != 1 
 				|| $this->results->getStatus('checkUploadLimit') != 1
 				|| $this->results->getStatus('checkFunctions') != 1);
-			$wrongVersion = $this->results->getStatus('checkVersion') != 1;
+			$wrongVersion = $this->results->getStatus('checkVersion') == -1;
+			$badVersion = $this->results->getStatus('checkVersion') == 0
 			
 			if ( $allgood ) {
 				$this->results->overall(1, 'PHP is okay!');
@@ -1009,6 +1010,8 @@
 				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
 				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 4.3.4', false);
+			} elseif ($wrongVersion) {
+				$this->results->overall(-1, 'You are running a bad PHP version. See below for details', true);
 			}
 		}
 		
