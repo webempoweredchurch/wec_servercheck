@@ -1910,6 +1910,10 @@
 				$recom = 'The base tag is still at its default value and needs to be changed
 					to the address of your TYPO3 installation.';
 				$this->results->test('checkBaseTag', 'Base Tag', $output[1], -1, $recom);
+			} else if (empty($output[1])) {
+				$recom = 'The base tag is empty and needs to be changed
+					to the address of your TYPO3 installation.';
+				$this->results->test('checkBaseTag', 'Base Tag', $output[1], -1, $recom);
 			} else {
 				$this->results->test('checkBaseTag', 'Base Tag', $output[1], 1);				
 			}
