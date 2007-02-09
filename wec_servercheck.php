@@ -1193,7 +1193,7 @@
 				$this->results->test('checkFunctions', 'Required Functions', 'success', 1);
 			} else {
 				$recom = 'Could not use the exec() PHP function on this server. Please check with your
-				 hosting company and to make sure that the 	use of the exec() function is allowed because
+				 hosting company and make sure that the use of the exec() function is allowed because
 				 it is needed for some TYPO3 features.';
 				$this->results->test('checkFunctions', 'Required Functions', 'failed', -1, $recom);
 			}
@@ -1510,7 +1510,8 @@
 			fclose($fileHandle);
 			
 			// now create a symlink to the file to check whether that works
-			if(function_exists('symlink')) {
+			$funcExists = function_exists('symlink');
+			if($funcExists) {
 				$sym = symlink('test.php', 'tmp/symtest.php');	
 			} else {
 				$sym = false;
@@ -1523,9 +1524,12 @@
 			$phpsuexec = $this->results->getStatus('check777');
 			
 			// check symlink
-			if(!$sym) {
+			if(!$sym && $funcExists) {
 				$recom = 'Symlinks couldn\'t be created.';
 				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);
+			} else if (!$sym && !$funcExists) {
+				$recom = 'Symlinks couldn\'t be created because the PHP function \'symlink\' is not available.';
+				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);	
 			} else if ($sym && $phpsuexec) {
 				if($GLOBALS['t3installed']) {
 					$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
