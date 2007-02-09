@@ -1188,7 +1188,13 @@
 		 * @return void
 		 **/
 		function checkFunctions() {
-			exec('ls -al', $output);
+			$win = strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) !== false;
+			if($win) {
+				exec('dir', $output);
+			} else {
+				exec('ls -al', $output);				
+			}
+
 			if($output) {
 				$this->results->test('checkFunctions', 'Required Functions', 'success', 1);
 			} else {
