@@ -1361,9 +1361,9 @@
 		function evaluate() {
 			
 			$allgood = $this->results->getStatus('symlinks') == 1 && $this->results->getStatus('checkTempPermissions') == 1;
-			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
-			$failnowin = $this->results->getStatus('symlinks') == -1 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
-			$warningnowin = $this->results->getStatus('symlinks') == 0 && !strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')));
+			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) !== false;
+			$failnowin = $this->results->getStatus('symlinks') == -1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) === false;
+			$warningnowin = $this->results->getStatus('symlinks') == 0 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) === false;
 			$phpsuexec = $this->results->getValue('check777') == 'No';
 
 			// if no symlink was created and this is windows show warning.
