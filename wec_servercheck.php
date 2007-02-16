@@ -1213,10 +1213,12 @@
 		 * @return void
 		 **/
 		function checkFunctions() {
-			$win = strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) !== false;
+			/* @fixme		Matches both Windows NT and Darwin */
+			$win = strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') !== false;
 			if($win) {
 				exec('dir', $output);
 			} else {
+				echo 'ls';
 				exec('ls -al', $output);				
 			}
 
@@ -1407,10 +1409,11 @@
 		
 		function evaluate() {
 			
+			/* @fixme		strpos matches both Windows NT and Darwin */
 			$allgood = $this->results->getStatus('symlinks') == 1 && $this->results->getStatus('checkTempPermissions') == 1;
-			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) !== false;
-			$failnowin = $this->results->getStatus('symlinks') == -1 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) === false;
-			$warningnowin = $this->results->getStatus('symlinks') == 0 && strpos('win', strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS'))) === false;
+			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') !== false;
+			$failnowin = $this->results->getStatus('symlinks') == -1 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') === false;
+			$warningnowin = $this->results->getStatus('symlinks') == 0 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') === false;
 			$phpsuexec = $this->results->getValue('check777') == 'No';
 
 			// if no symlink was created and this is windows show warning.
