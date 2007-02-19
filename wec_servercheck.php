@@ -1432,14 +1432,14 @@
 				$this->results->overall(0, $recom, false);
 			// using windows
 			} else if ($failwin) {
-				$recom = 'Symlinks couldn\'t be created. This is perfectly normal since the server is running Windows.';
-				if ($GLOBALS['t3installed']) $recom .= 'Please download the .zip package to install TYPO3.';
+				$recom = 'Since your server is running Windows, and Windows does not support symlinks. ';
+				if ($GLOBALS['t3installed']) $recom .= 'Please be sure to use the zip package to install TYPO3.';
 				$this->results->overall(1, $recom, false);
 
 			} else if ($failnowin) {
 				$recom = 'Symlinks couldn\'t be created even though you are not using Windows. Please check the
 					permissions on the folder this script is installed in and make sure it is allowed to write to it.';
-				if (!$GLOBALS['t3installed']) $recom .= ' Please download the .zip package to install TYPO3.';
+				if (!$GLOBALS['t3installed']) $recom .= ' Please be sure to use the zip package to install TYPO3.';
 				$this->results->overall(-1, $recom, false);
 			}
 			
