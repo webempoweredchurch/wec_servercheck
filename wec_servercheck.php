@@ -658,7 +658,7 @@
 				$show .= '<ul>';
 				foreach( $failed as $singleR )
 				{
-					$show .= '<li>' . $singleR . '</li>';
+					if(!empty($singleR)) $show .= '<li>' . $singleR . '</li>';
 				}
 				$show .= '</ul>';
 			}
@@ -1905,12 +1905,13 @@
 			);
 			$rootSym = $this->results->getStatus('rootSym') == 1;
 			$rootSymWarn = $this->results->getStatus('rootSym') == 0;
+			
 			// if everything is good, say it and quit
 			if ($allgood) {
 				$this->results->overall(1, 'Everything is alright');
 				return;
 			} 
-			
+
 			if($rootSym) {
 				$this->results->overall(1);
 			} else if($rootSymWarn) {
