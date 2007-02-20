@@ -1091,7 +1091,7 @@
 			$os = php_uname('s');
 			
 			// these three OS are known, display warning if an unknown one is shown.
-			if($os == 'FreeBSD' || $os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
+			if($os == 'FreeBSD' || $os == 'SunOS' || $os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
 				$this->results->test('checkOS', 'OS', $os, 1);
 			} else {
 				$this->results->test('checkOS', 'OS', $os, 0, 'Unknown Operating System');
@@ -1539,7 +1539,7 @@
 			rmdir('tmp');
 			
 		}
-
+		
 		/**
 		 * Check whether symlinks work
 		 *
