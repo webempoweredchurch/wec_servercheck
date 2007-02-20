@@ -72,7 +72,7 @@
 	
 	// define global variable to hold that information
 	($typo3 && $t3conf && $file && $uploads) ? $GLOBALS['t3installed'] = true : $GLOBALS['t3installed'] = false ;
-
+	
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
@@ -706,7 +706,7 @@
 	//-----------------------------------
 	//|			Test Modules			|
 	//-----------------------------------
-	
+
 	/**
 	 * Defines the results for one test module.
 	 *
@@ -1213,12 +1213,10 @@
 		 * @return void
 		 **/
 		function checkFunctions() {
-			/* @fixme		Matches both Windows NT and Darwin */
-			$win = strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') !== false;
+			$win = isWindows();
 			if($win) {
 				exec('dir', $output);
 			} else {
-				echo 'ls';
 				exec('ls -al', $output);				
 			}
 
@@ -1409,11 +1407,10 @@
 		
 		function evaluate() {
 			
-			/* @fixme		strpos matches both Windows NT and Darwin */
 			$allgood = $this->results->getStatus('symlinks') == 1 && $this->results->getStatus('checkTempPermissions') == 1;
-			$failwin = 	$this->results->getStatus('symlinks') != 1 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') !== false;
-			$failnowin = $this->results->getStatus('symlinks') == -1 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') === false;
-			$warningnowin = $this->results->getStatus('symlinks') == 0 && strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win') === false;
+			$failwin = 	$this->results->getStatus('symlinks') != 1 && isWindows();
+			$failnowin = $this->results->getStatus('symlinks') == -1 && !isWindows();
+			$warningnowin = $this->results->getStatus('symlinks') == 0 && !isWindows();
 			$phpsuexec = $this->results->getValue('check777') == 'No';
 
 			// if no symlink was created and this is windows show warning.
@@ -2216,6 +2213,21 @@
 	}
 	
 	//-----------------------------------
+	//|			Helper methods			|
+	//-----------------------------------
+	
+	/**
+	 * Checks whether this OS is Windows
+	 *
+	 * @return boolean
+	 **/
+	function isWindows() {
+		$result = strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win');
+		if($result === 0) return true;
+		else return false;
+	}
+
+	//-----------------------------------
 	//|		Pull everything together	|
 	//-----------------------------------
 	
@@ -2236,7 +2248,7 @@
 
 	// run all the tests
 	$mc->runAll();
-
+		isWindows();
 	// pass the results to the render controller
 	$rc->setResults($mc->getResults());
 
