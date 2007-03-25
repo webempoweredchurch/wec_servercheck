@@ -760,7 +760,7 @@
 			// want the worst one to show. Before, if a warning was added after a fail,
 			// the whole test would be a warning. So we always show the worst status.
 			if($this->overall['status'] > $status)	$this->overall['status'] = $status;
-			$this->overall['recommendation'][] = $recommendation;
+			if(!empty($recommendation)) $this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
 		}
 		
@@ -2042,7 +2042,11 @@
 				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
 					Please report this issue on the WEC Support forums.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
-			
+
+			} else if (strpos($vheaders[0], '404 Not Found') !== false) {
+				$recom = 'Rewritten page not found.';
+				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
+
 			// just a fail safe.
 			} else {
 				$this->results->test('checkRealURL', 'RealURL', 'Failed', -1, 'Unknown error. Headers: ' . $rheaders[0] . '<br />' . $vheaders[0]);
@@ -2222,6 +2226,7 @@
 	 *
 	 * @return boolean
 	 **/
+
 	function isWindows() {
 		$result = strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win');
 		if($result === 0) return true;
@@ -2249,7 +2254,7 @@
 
 	// run all the tests
 	$mc->runAll();
-		isWindows();
+	
 	// pass the results to the render controller
 	$rc->setResults($mc->getResults());
 
