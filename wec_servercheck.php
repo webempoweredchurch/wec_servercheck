@@ -1232,6 +1232,11 @@
 		}
 	}
 	
+	/**
+	 * Check email capailities
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
 	class Email extends Module {
 		
 		function __construct() {
@@ -1297,6 +1302,133 @@
 			} else {
 				$this->results->test('checkMail', 'email sending via mail()', 'info', 0);
 			}	
+		}
+	}
+	
+	/**
+	 * Check graphic capabilities like GD and Image- or GraphicsMagick
+	 *
+	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
+	 **/
+	class Graphics extends Module {
+		
+		var $PATHS = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/local/bin';
+		
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = "Graphics Test";
+		}
+		
+		function check() {
+			$this->checkGD();
+			$this->checkGM();
+			$this->checkIM();
+		}
+		
+		function evaluate() {
+			$allgood = ($this->results->getStatus('checkGD') == 1) 
+				&& ($this->results->getStatus('checkGM') == 1)
+				&& ($this->results->getStatus('checkIM') == 1);
+			
+			$GDandOther = ($this->results->getStatus('checkGD') == 1) 
+				&& (($this->results->getStatus('checkGM') == 1)
+ 				|| ($this->results->getStatus('checkIM') == 1));
+
+			$Otheronly = ($this->results->getStatus('checkGM') == 1)
+			|| ($this->results->getStatus('checkIM') == 1);
+			
+			$GDonly = ($this->results->getStatus('checkGD') == 1) 
+				&& !(($this->results->getStatus('checkGM') == 1)
+ 				|| ($this->results->getStatus('checkIM') == 1));
+			
+			// got all libs, wow!
+			if($allgood) {
+				$this->results->overall(1, 'You have all required graphics libraries', false);					
+			
+			// still good
+			} else if($GDandOther){
+				$this->results->overall(1, 'You have all required libraries', false);
+			
+			// no GD
+			} else if ($Otheronly) {
+				$recom = 'You are missing the GD library, but you do have Graphics- or ImageMagick installed, which should be enough.';
+				$this->results->overall(0, $recom);
+			
+			// GD only
+			} else if($GDonly) {
+				$recom = 'You are missing an important graphics library. Please install either Graphics- or ImageMagick or ask your administrator for assistance.';
+				$this->results->overall(-1, $recom);
+			
+			} else {
+				$recom = 'You don\'t have any graphics libraries installed. Please install at least Graphics- or ImageMagick.';
+				$this->results->overall(-1, $recom);
+			}
+
+		}
+		
+		/**
+		 * Checks if the GD extension is loaded
+		 *
+		 * @return void
+		 **/
+		function checkGD() {
+			$exts = get_loaded_extensions();
+
+			// gd found
+			if(in_array('gd', $exts)) {
+				$this->results->test('checkGD', 'GD library', 'found', 1);
+			// not found
+			} else {
+				$recom = 'GD library wasn\'t found.';
+				$this->results->test('checkGD', 'GD library', 'failed', 0, $recom);
+			}
+		}
+		
+		/**
+		 * Checks for graphicsmagick
+		 *
+		 * @return void
+		 **/
+		function checkGM() {
+
+			$paths = explode(':', $this->PATHS);
+			
+			$found = false;
+			foreach( $paths as $key => $value ) {
+				exec($value.'/gm', $output);
+				if(!empty($output)) $found = true;
+			}
+
+			if($found) {
+				$this->results->test('checkGM', 'GraphicsMagick library', 'found', 1);
+			} else {
+				$recom = 'GraphicsMagick not installed';
+				$this->results->test('checkGM', 'GraphicsMagick library', 'failed', -1, $recom);
+			}
+		}
+		
+		/**
+		 * Checks for imagemagick
+		 *
+		 * @return void
+		 **/
+		function checkIM() {
+
+			$paths = explode(':', $this->PATHS);
+			
+			$found = false;
+			foreach( $paths as $key => $value ) {
+				exec($value.'/combine', $output);
+				if(!empty($output)) $found = true;
+			}
+
+			if($found) {
+				$this->results->test('checkIM', 'ImageMagick library', 'found', 1);
+			} else {
+				$recom = 'ImageMagick not installed';
+				$this->results->test('checkIM', 'ImageMagick library', 'failed', -1, $recom);
+			}
 		}
 	}
 	
@@ -2087,12 +2219,12 @@
 
 			// get the Learn & Grow page normally
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
-			$norm = fread($fileHandle, 8192);
+			$norm = fread($fileHandle, 1024);
 			fclose($fileHandle);
 			
 			// get the Learn & Grow page rewritten
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'learn_grow/', 'r');
-			$rewr = fread($fileHandle, 8192);
+			$rewr = fread($fileHandle, 1024);
 			fclose($fileHandle);
 						
 			// Now check headers on the normal page...
@@ -2321,6 +2453,7 @@
 	$mc->register('MySQL');
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
+	$mc->register('Graphics');
 	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
 	
 	// turn off error reporting. After all, that's what we're doing here.
