@@ -1419,7 +1419,7 @@
 
 			$found = false;
 			foreach( $paths as $key => $value ) {
-				exec($value.'/combine', $output);
+				exec($value.'/convert', $output);
 				if(!empty($output)) $found = true;
 			}
 
