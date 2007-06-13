@@ -38,6 +38,9 @@
 	$GLOBALS['dbUser'] = '';
 	$GLOBALS['dbPass'] = '';
 	
+	// your email to test the PHP mail() function
+	$GLOBALS['email'] = '';
+	
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// !!!! PLEASE DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -133,7 +136,7 @@
 		function runAll() {
 			foreach($this->modules as $module) {
 				$module->run();
-				$this->results[$module->getTitle()] = $module->getResults();					
+				$this->results[$module->getTitle()] = $module->getResults();
 			}
 		}
 		
@@ -922,7 +925,6 @@
 	   * @desc Fetches all the headers
 	   **/
 	   	function getHeaders($url,$format=0) {
-
 			$url_info=parse_url($url);
 			$port = isset($url_info['port']) ? $url_info['port'] : 80;
 			$fp=fsockopen($url_info['host'], $port, $errno, $errstr, 30);
@@ -984,7 +986,6 @@
 				&& $this->results->getStatus('checkMemoryLimit') == 1
 				&& $this->results->getStatus('checkUploadLimit') == 1
 				&& $this->results->getStatus('checkExecTime') == 1
-				&& $this->results->getStatus('checkFunctions') == 1
 			);
 			
 			$almostallgood = ($this->results->getStatus('checkVersion') == 1
@@ -1228,6 +1229,74 @@
 				 it is needed for some TYPO3 features.';
 				$this->results->test('checkFunctions', 'Required Functions', 'failed', -1, $recom);
 			}
+		}
+	}
+	
+	class Email extends Module {
+		
+		function __construct() {
+			parent::__construct();
+			
+			$this->title = "Email Test";
+		}
+		
+		function check() {
+			$this->checkMail();
+		}
+		
+		function evaluate() {
+			$status = $this->results->getStatus('checkMail');
+			switch ($status) {
+				case 1:
+					$recom = 'An email was dispatched to the address you specified. If you receive it, everything is good.
+					If not, please check your mail logs or ask your administrator for assistance.';
+					$this->results->overall(1, $recom);
+					break;
+				case 0:
+					$recom = 'Couldn\'t test email sending capabilities because no email address was specified. Please edit the top of this
+					file to enter one.';
+					$this->results->overall(0, $recom, false);
+					break;
+				
+				case -1:
+					$recom = 'The email wasn\'t send on to the delivery system. Please check your web server\'s error log and mail logs to
+					get more details, or ask your administrator for assistance.';
+					$this->results->overall(-1, $recom, false);
+					break;
+
+				default:
+					break;
+			}
+
+		}
+		
+		/**
+		 * Checks the mail() function by sending a test email to the specified address
+		 *
+		 * @return void
+		 **/
+		function checkMail() {
+			$to = $GLOBALS['email'];
+			
+			if(!empty($to)) {
+				$from = 'From: WEC Server Checker <noreply@example.com>';
+				$subject = 'WEC Server Checker Test Email';
+				$message = 'If you can read this, your server can successfully send emails!';
+
+				$out = mail($to, $subject, $message, $from);
+
+				// mail() returns true if the email was passed to delivery
+				if($out) {
+					$this->results->test('checkMail', 'email sending via mail()', 'info', 1);
+				
+				// and false if not
+				} else {
+					$this->results->test('checkMail', 'email sending via mail()', 'failed', -1);					
+				}
+
+			} else {
+				$this->results->test('checkMail', 'email sending via mail()', 'info', 0);
+			}	
 		}
 	}
 	
@@ -2031,12 +2100,12 @@
 
 			// .. and the rewritten page
 			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'learn_grow/');
-						
+
 			// if we get a 200 OK and the headers are the same plus the content of both pages is
 			// identical, it worked
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm == $rewr) {
 				$this->results->test('checkRealURL', 'RealURL', 'success', 1);
-			
+
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
 				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
@@ -2046,6 +2115,10 @@
 			} else if (strpos($vheaders[0], '404 Not Found') !== false) {
 				$recom = 'Rewritten page not found.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
+
+			} else if (strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0] && $norm != $rewr) {
+				$recom = 'Websites are cached. Please clear FE cache in TYPO3';
+				$this->results->test('checkRealURL', 'RealURL', 'warning', 0, $recom);
 
 			// just a fail safe.
 			} else {
@@ -2244,6 +2317,7 @@
 
 	// register modules
 	$mc->register('PHP');
+	$mc->register('Email');
 	$mc->register('MySQL');
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
