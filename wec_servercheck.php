@@ -6,13 +6,13 @@
 * All rights reserved
 *
 * This file is part of the Web-Empowered Church (WEC) ministry of the
-* Foundation for Evangelism (http://evangelize.org). The WEC is developing 
-* TYPO3-based free software for churches around the world. Our desire 
+* Foundation for Evangelism (http://evangelize.org). The WEC is developing
+* TYPO3-based free software for churches around the world. Our desire
 * use the Internet to help offer new life through Jesus Christ. Please
 * see http://WebEmpoweredChurch.org/Jesus.
 *
-* You can redistribute this file and/or modify it under the terms of the 
-* GNU General Public License as published by the Free Software Foundation; 
+* You can redistribute this file and/or modify it under the terms of the
+* GNU General Public License as published by the Free Software Foundation;
 * either version 2 of the License, or (at your option) any later version.
 *
 * The GNU General Public License can be found at
@@ -37,14 +37,14 @@
 	$GLOBALS['dbHost'] = 'localhost';
 	$GLOBALS['dbUser'] = '';
 	$GLOBALS['dbPass'] = '';
-	
+
 	// your email to test the PHP mail() function
 	$GLOBALS['email'] = '';
-	
+
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// !!!! PLEASE DON'T EDIT ANYTHING BEYOND THIS LINE !!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
+
 	//-----------------------------------
 	//|			Misc Options			|
 	//-----------------------------------
@@ -52,13 +52,13 @@
 	// determine relative path to typo3/this script.
 	$GLOBALS['relativePath'] = substr($_SERVER['REQUEST_URI'], 0, -19);
 
-	// Path to this script from a web browser, without the name of the script. 
-	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . 
+	// Path to this script from a web browser, without the name of the script.
+	$GLOBALS['scriptPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
 		$GLOBALS['relativePath'];
-	
+
 	// TYPO3 path in the file system.
 	$GLOBALS['TYPO3Path'] = $_SERVER['DOCUMENT_ROOT'] . $GLOBALS['relativePath'];
-	
+
 	// TYPO3 path from a browser.
 	$GLOBALS['TYPO3WebPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
 		$GLOBALS['relativePath'];
@@ -66,32 +66,32 @@
 	//-----------------------------------
 	//|		Check for TYPO3 Install		|
 	//-----------------------------------
-	
+
 	// check for typo3, typo3conf, fileadmin, uploads
 	$typo3 = file_exists('typo3') && is_dir('typo3');
 	$t3conf = file_exists('typo3conf') && is_dir('typo3conf');
 	$file = file_exists('fileadmin') && is_dir('fileadmin');
 	$uploads = file_exists('uploads') && is_dir('uploads');
-	
+
 	// define global variable to hold that information
 	($typo3 && $t3conf && $file && $uploads) ? $GLOBALS['t3installed'] = true : $GLOBALS['t3installed'] = false ;
-	
+
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
-	
+
 	/**
 	 * ModuleController, keeps a list of all the test modules and manages their
 	 * execution.
-	 * 
+	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class ModuleController {
-		
-	
+
+
 		var $modules;
 		var $results;
-	
+
 		/**
 		 * PHP4 constructor.
 		 **/
@@ -107,7 +107,7 @@
 			$this->modules = array();
 			$this->results = array();
 		}
-			
+
 		/**
 		 * Registers all the test modules inside the controller for easy access.
 		 *
@@ -118,7 +118,7 @@
 			$cur = new $module;
 			$this->modules[$cur->getTitle()] = $cur;
 		}
-		
+
 		/**
 		 * Returns all the registered modules.
 		 *
@@ -127,7 +127,7 @@
 		function getModules() {
 			return $this->modules;
 		}
-		
+
 		/**
 		 * Runs all modules and keeps track of dependencies.
 		 *
@@ -139,16 +139,16 @@
 				$this->results[$module->getTitle()] = $module->getResults();
 			}
 		}
-		
+
 		/**
 		 * Returns the value for a particular test
-		 * 
+		 *
 		 * @param $test The title of the module
 		 * @param $subtest The name of the subtest, like 'Version' etc.
 		 * @return String
 		 **/
 		function getTestValue($test, $subtest) {
-			
+
 			// run a single test
 			$this->modules[$test]->$subtest();
 
@@ -159,10 +159,10 @@
 			// return the value for the one we need
 			return $modResults[$subtest]['value'];
 		}
-		
+
 		/**
 		 * Returns the status for a particular test
-		 * 
+		 *
 		 * @param $test The title of the module
 		 * @param $subtest The name of the subtest, like 'Version' etc.
 		 * @return String
@@ -171,7 +171,7 @@
 
 			// run a single test
 			$this->modules[$test]->$subtest();
-			
+
 			// get the results object for it first, then the results
 			$res = $this->modules[$test]->getResults();
 			$modResults = $res->getTests();
@@ -179,7 +179,7 @@
 			// return the status for the one we need
 			return $modResults[$subtest]['status'];
 		}
-		
+
 		/**
 		 * Returns all the results, ususally for use in a rendering object to display them.
 		 *
@@ -191,18 +191,18 @@
 	}
 	$mc = new ModuleController();
 	$GLOBALS['mc'] = $mc;
-	
+
 	/**
-	 * Provides an object that just controls all other renderers. RenderController will simply 
+	 * Provides an object that just controls all other renderers. RenderController will simply
 	 * pull together the Renderers and Modules and present the output to the user.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class RenderController	{
-		
+
 		var $renderers;
 		var $results;
-		
+
 		/**
 		 * PHP4 compatible constructor
 		 *
@@ -210,7 +210,7 @@
 		function RenderController() {
 			$this->__construct();
 		}
-		
+
 		/**
 		 * Constructor
 		 *
@@ -219,7 +219,7 @@
 			$this->results = array();
 			$this->renderers = array();
 		}
-		
+
 		/**
 		 * Registers all the renderers inside the controller for easy access.
 		 *
@@ -231,31 +231,31 @@
 			$obj = new $renderer;
 			$this->renderers[] = $obj;
 		}
-		
+
 		/**
 		 * Renders all the output inside a HTML page
 		 *
 		 * @return String
 		 **/
 		function render() {
-			
+
 			$show = '<html><head>';
 			$show .= $this->printHeaders();
 			$show .= '<title>WEC Server Checker</title>';
 			$show .= '</head><body>';
 			$show .= '<h1>Web-Empowered Church Server Checker</h1>';
-			
+
 			foreach( $this->renderers as $renderer ) {
 				$show .= $renderer->renderAll($this->results);
 			}
-			
+
 			$note = '<strong>Note:</strong> If you know that any of these test results are wrong, please post your test results and corrections in the <a href="http://webempoweredchurch.com/support/community/">"Installing" forum on the WEC website</a>. Thank you!';
 			$show .= '<div style="width: 600px;">' . $note . '</div>';
 			$show .= '</body></head>';
-			
+
 			return $show;
 		}
-		
+
 		/**
 		 * Sets the results from all the modules.
 		 *
@@ -264,7 +264,7 @@
 		function setResults($results) {
 			$this->results = $results;
 		}
-		
+
 		/**
 		 * Prints out all the headers.
 		 *
@@ -277,24 +277,24 @@
 			}
 			return $headers;
 		}
-		
+
 	} // END class RenderController
 	$rc = new RenderController();
 
 	//-----------------------------------
 	//|			Output Renderers		|
 	//-----------------------------------
-	
+
 	/**
 	 * Abstract class that all Renderers need to inherit from.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Renderer {
-		
+
 		var $headers;
 		var $output;
-		
+
 		/**
 		 * PHP4 compatible constructor
 		 *
@@ -302,7 +302,7 @@
 		function Renderer() {
 			$this->__construct();
 		}
-		
+
 		/**
 		 * Constructor
 		 *
@@ -311,15 +311,15 @@
 			$this->output = array();
 			$this->headers = $this->setHeaders();
 		}
-		
+
 		/**
-		 * Determines how a single test module is rendered.	
+		 * Determines how a single test module is rendered.
 		 *
 		 **/
 		function render() {
 			die("Please override the render() method in our class");
 		}
-		
+
 		/**
 		 * Handles the rendering of all the test modules.
 		 *
@@ -327,7 +327,7 @@
 		function renderAll() {
 			die("Please override the renderAll() method in our class");
 		}
-		
+
 		/**
 		 * Defines headers that need to go inside <head> tags. Can be
 		 * overwridden by the child class if needed.
@@ -338,33 +338,33 @@
 
 			return null;
 		}
-		
+
 		/**
-		 * Returns the headers for this renderer.  			
+		 * Returns the headers for this renderer.
 		 *
 		 * @return String
 		 **/
 		function getHeaders() {
 			return $this->headers;
 		}
-		
+
 	} // END class Renderer
-	
+
 	/**
 	 * Renders the detailed output of the test results. Can be replaced to change output format.
 	 *
-	 * 
+	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class RenderDetailed extends Renderer {
-	
+
 		// Table Row
 		var $ROW = '<tr><td>%s</td><td><pre>%s</pre></td><td>%s</td></tr>';
 
 		// Recommendation Rows
 		var $RROWW = '<tr class="recomrowwarn"><td colspan="3">%s</td></tr>';
 		var $RROWF = '<tr class="recomrowfail"><td colspan="3">%s</td></tr>';
-				
+
 		// Table title
 		var $TITLE = '<th colspan="3">%s</th>';
 
@@ -383,10 +383,10 @@
 			$output .= '</div>';
 			return $output;
 		}
-		
+
 		/**
 		 * Renders the module results.
-		 * 
+		 *
 		 * @param $testData Testdata array.
 		 * @param $title The title for this module.
 		 * @return String
@@ -400,16 +400,16 @@
 				$status = $this->getStatus($value['status']);
 				$show .= sprintf($this->ROW, $value['name'], $value['value'], $status);
 				if(isset($value['recommendation']) && $value['status'] == 0) {
-					$show .= sprintf($this->RROWW, $value['recommendation']);	
+					$show .= sprintf($this->RROWW, $value['recommendation']);
 				} else if (isset($value['recommendation']) && $value['status'] == -1) {
-					$show .= sprintf($this->RROWF, $value['recommendation']);	
+					$show .= sprintf($this->RROWF, $value['recommendation']);
 				}
 			}
 			$show .= '</table>';
-			
+
 			return $show;
 		}
-		
+
 		/**
 		 * Translate the status integer codes into a String or even image to display.
 		 *
@@ -425,7 +425,7 @@
 				return '<span style="color: red;">Failed</span>';
 			}
 		}
-		
+
 		/**
 		 * Defines stuff that needs to go inside the <head> tag. Is called by the constructor, so it's just
 		 * a convenient way to separately define this data.
@@ -443,11 +443,11 @@
 				th {
 					border-bottom: 1px black solid;
 				}
-				
+
 				#detailed {
 					display: none;
 				}
-				
+
 				.recomrowfail td{
 					border-top: 1px solid black;
 					border-bottom: 1px solid black;
@@ -470,7 +470,7 @@
 				}
 
 			</style>';
-			
+
 			$headers .= '<script type="text/javascript">
 				function toggle() {
 					var a = document.getElementById(\'showhidelink\');
@@ -480,24 +480,24 @@
 					} else {
 						a.innerHTML = \'Hide Details\';
 						show()
-		
+
 					}
 				}
-				
+
 				function hide() {
 					var element = document.getElementById("detailed");
 					element.style.display = "none";
 				}
-				
+
 				function show() {
 					var element = document.getElementById("detailed");
 					element.style.display = "block";
 				}
 			</script>';
-				
+
 			return $headers;
 		}
-	} 
+	}
 
 	/**
 	 * Renders the output as plain text inside a textarea for easy copying and pasting.
@@ -508,13 +508,13 @@
 
 		// plain row
 		var $PROW = "%s \t\t %s \t\t %s\n";
-		
+
 		// Recommendation Rows
 		var $PRROW = "%s\n";
 
 		// title
 		var $PTITLE = "\n-= %s =-\n";
-		
+
 		/**
 		 * Renders all the modules from given results array
 		 *
@@ -522,22 +522,22 @@
 		 * @return String
 		 **/
 		function renderAll($results) {
-			
+
 			$plain = null;
 			$output = null;
-			
+
 			foreach($results as $title => $resultsObj) {
 				$plain .= $this->render($resultsObj->getTests(), $title);
 			}
-			
+
 			$output .= '<p>Copy and paste the contents of the textarea below into emails or forum posts.<br />';
 			$output .= '<textarea cols="100" rows="20">';
 			$output .= $plain;
 			$output .= '</textarea></p>';
-			
+
 			return $output;
 		}
-		
+
 		/**
 		 * Renders the module results in plain text.
 		 *
@@ -551,17 +551,17 @@
 				$length1 = strlen($value['name']);
 				$length2 = strlen($value['value']);
 				if($length1 < 8) {
-					$pad1 = "\t\t\t";	
+					$pad1 = "\t\t\t";
 				} else if ($length1 > 14) {
-					$pad1 = "\t";	
+					$pad1 = "\t";
 				} else {
 					$pad1 = "\t\t";
 				}
-				
+
 				if($length2 < 8) {
-					$pad2 = "\t\t\t";	
+					$pad2 = "\t\t\t";
 				} else if ($length2 > 14) {
-					$pad2 = "\t";	
+					$pad2 = "\t";
 				} else {
 					$pad2 = "\t\t";
 				}
@@ -572,10 +572,10 @@
 					$show .= sprintf($this->PRROW, $value['recommendation']);
 				}
 			}
-			
+
 			return $show;
 		}
-		
+
 		/**
 		 * Translates the status integer codes into plain text Strings.
 		 *
@@ -591,7 +591,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * Shows just one result for each Module, making it easier for non-technical users to
 	 * get the gist of what is going on without sensory overload.
@@ -599,7 +599,7 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class OverallResults extends Renderer {
-		
+
 		/**
 		 * Renders all the modules from given results array
 		 *
@@ -608,7 +608,7 @@
 		 **/
 		function renderAll($results) {
 			$output = null;
-			
+
 			foreach($results as $title => $resultsObj) {
 				$output .= $this->render($title, $resultsObj);
 			}
@@ -623,28 +623,28 @@
 		 * @return void
 		 **/
 		function render($title, $resultsObj) {
-			
+
 			// get all the failed test's recommendations
 			$failed = $resultsObj->getFailedRecoms();
-			
+
 			// check if we want to show failed recommendations
 			$showFailed = $resultsObj->showFailed();
-			
+
 			// get the overall info and put it in separate variables
 			$overall = $resultsObj->getOverall();
 			$status = $overall['status'];
 			$recom = null;
-			
+
 			// show recommendations if there are any
 			if(!empty($overall['recommendation'])) {
-				
+
 				$recom = '<ul>';
 				foreach( $overall['recommendation'] as $value ) {
 					$recom .= '<li>' . $value . '</li>';
 				}
 				$recom .= '</ul>';
 			}
-			
+
 			// start the output table
 			$show = '<table cellspacing="0">';
 			$show .= '<tr><td class="overall-tablefield">';
@@ -654,7 +654,7 @@
 			$show .= '</td></tr>';
 			$show .= '<tr><td colspan="2">';
 			$show .= $recom;
-			
+
 			// only if there are failed tests do we want to show the recommendations
 			if(!empty($failed) && $showFailed) {
 				$show .= 'Details: <br />';
@@ -668,10 +668,10 @@
 
 			$show .= '</td></tr>';
 			$show .= '</td></tr></table>';
-			
-			return $show;	
+
+			return $show;
 		}
-		
+
 		/**
 		 * Translate the status integer codes into a String or even image to display.
 		 *
@@ -687,7 +687,7 @@
 				return '<span style="color: red;">Failed</span>';
 			}
 		}
-		
+
 		/**
 		 * Set headers
 		 *
@@ -699,13 +699,13 @@
 					width: 300px;
 					font-weight: bold;
 					border-bottom: 1px solid black;
-				}			
+				}
 			</style>';
 			return $headers;
 		}
-		
-	} // END class OverallResults	
-	
+
+	} // END class OverallResults
+
 	//-----------------------------------
 	//|			Test Modules			|
 	//-----------------------------------
@@ -718,7 +718,7 @@
 	class Results {
 		var $overall;
 		var $testResults;
-		
+
 		/**
 		 * PHP4 compatible constructor
 		 *
@@ -726,7 +726,7 @@
 		function Results() {
 			$this->__construct();
 		}
-		
+
 		/**
 		 * Constructor
 		 *
@@ -738,7 +738,7 @@
 			$this->overall['recommendation'] = array();
 			$this->testResults = array();
 		}
-		
+
 		/**
 		 * Fills in the result array.
 		 *
@@ -750,7 +750,7 @@
 			$this->testResults[$method]['name'] = $name;
 			(empty($recommendation)) ? null : $this->testResults[$method]['recommendation'] = $recommendation;
 		}
-		
+
 		/**
 		 * Similar to message, except it works on a whole module and thus
 		 * writes to different segements of the array.
@@ -758,7 +758,7 @@
 		 * @return void
 		 **/
 		function overall($status, $recommendation = null, $showFailedRecoms = true) {
-			
+
 			// if we are at a good status right now, but want to add a worse one, we
 			// want the worst one to show. Before, if a warning was added after a fail,
 			// the whole test would be a warning. So we always show the worst status.
@@ -766,7 +766,7 @@
 			if(!empty($recommendation)) $this->overall['recommendation'][] = $recommendation;
 			$this->overall['showFailed'] = $showFailedRecoms;
 		}
-		
+
 		/**
 		 * Gets the title of the test.
 		 *
@@ -775,7 +775,7 @@
 		function getOverall() {
 			return $this->overall;
 		}
-		
+
 		/**
 		 * Returns the test result array
 		 *
@@ -784,7 +784,7 @@
 		function getTests() {
 			return $this->testResults;
 		}
-		
+
 		/**
 		 * Gets the status for a test
 		 *
@@ -793,7 +793,7 @@
 		function getStatus($test) {
 			return $this->testResults[$test]['status'];
 		}
-		
+
 		/**
 		 * Get value for a test
 		 *
@@ -802,7 +802,7 @@
 		function getValue($test) {
 			return $this->testResults[$test]['value'];
 		}
-		
+
 		/**
 		 * Returns an array of recommendations of all those tests that failed.
 		 *
@@ -810,7 +810,7 @@
 		 **/
 		function getFailedRecoms() {
 			$failed = array();
-			
+
 			foreach( $this->testResults as $test )
 			{
 				if ( $test['status'] !== 1) {
@@ -819,7 +819,7 @@
 			}
 			return $failed;
 		}
-		
+
 		/**
 		 * Whether or not to show the single recommendations
 		 *
@@ -827,13 +827,13 @@
 		 **/
 		function showFailed() {
 			return $this->overall['showFailed'];
-		}		
+		}
 	} // END class Result
 
 	/**
 	 * Abstract class Module, blueprint for test modules.
 	 *
-	 * 
+	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Module {
@@ -868,7 +868,7 @@
 		function check() {
 			die("Please override this function in your class.");
 		}
-		
+
 		/**
 		 * Makes a suggestion based on all the test results.
 		 *
@@ -877,7 +877,7 @@
 		function evaluate() {
 			//die("Please override this function in your class.");
 		}
-		
+
 		/**
 		 * Get title for module.
 		 *
@@ -886,7 +886,7 @@
 		function getTitle() {
 			return $this->title;
 		}
-		
+
 		/**
 		 * Returns the Results object of this test.
 		 *
@@ -895,7 +895,7 @@
 		function getResults() {
 			return $this->results;
 		}
-		
+
 		/**
 		 * Checks whether the test has already run.
 		 *
@@ -904,7 +904,7 @@
 		function hasRun() {
 			return $this->hasRun;
 		}
-		
+
 		/**
 		 * Runs the given module if it hasn't run before and saves the results in an array.
 		 *
@@ -956,7 +956,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * Does some basic PHP checks.
 	 *
@@ -969,8 +969,8 @@
 
 			$this->title = "PHP Scripting Test";
 		}
-		
-		
+
+
 		function check() {
 			$this->checkVersion();
 			$this->checkServerAPI();
@@ -980,28 +980,28 @@
 			$this->checkUploadLimit();
 			$this->checkFunctions();
 		}
-		
+
 		function evaluate() {
 			$allgood = ($this->results->getStatus('checkVersion') == 1
 				&& $this->results->getStatus('checkMemoryLimit') == 1
 				&& $this->results->getStatus('checkUploadLimit') == 1
 				&& $this->results->getStatus('checkExecTime') == 1
 			);
-			
+
 			$almostallgood = ($this->results->getStatus('checkVersion') == 1
 				&& $this->results->getStatus('checkMemoryLimit') == 1
 				&& $this->results->getStatus('checkUploadLimit') == 0
 				&& $this->results->getStatus('checkFunctions') == 1
 			);
-					
+
 			$configError = ($this->results->getStatus('checkVersion') == 1
-				|| $this->results->getStatus('checkMemoryLimit') != 1 
+				|| $this->results->getStatus('checkMemoryLimit') != 1
 				|| $this->results->getStatus('checkUploadLimit') != 1
 				|| $this->results->getStatus('checkExecTime') != 1
 				|| $this->results->getStatus('checkFunctions') != 1);
 			$wrongVersion = $this->results->getStatus('checkVersion') == -1;
 			$badVersion = $this->results->getStatus('checkVersion') == 0;
-			
+
 			if ( $allgood ) {
 				$this->results->overall(1, 'PHP is okay!');
 				return;
@@ -1009,7 +1009,7 @@
 				$this->results->overall(0, 'PHP is nearly okay!');
 				return;
 			}
-			
+
 			if ( $configError ) {
 				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
@@ -1018,7 +1018,7 @@
 				$this->results->overall(-1, 'You are running a bad PHP version. See below for details', true);
 			}
 		}
-		
+
 		/**
 		 * Evaluates the PHP version.
 		 *
@@ -1034,19 +1034,19 @@
 			$majorVersion = $versionArray[0];
 			$minorVersion = $versionArray[1];
 			$miniVersion = $versionArray[2];
-			
+
 			// if it's PHP 4 or 5, we should be good, otherwise display error.
 			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion == 0) {
 				$recom = 'There are a few severe issues with PHP 5.2.0 that prevent TYPO3 from working correctly.
 					Please either upgrade to a higher version or downgrade to a lower version.';
-				$this->results->test('checkVersion', 'Version', $version, 0, $recom);			
+				$this->results->test('checkVersion', 'Version', $version, 0, $recom);
 			} else if ($majorVersion == 4 || $majorVersion == 5) {
 				$this->results->test('checkVersion', 'Version', $version, 1);
 			} else {
-				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version number is too low!");				
+				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version number is too low!");
 			}
 		}
-		
+
 		/**
 		 * Checks whether PHP runs in Apache or CGI
 		 *
@@ -1056,15 +1056,15 @@
 
 			// get Server API
 			$api = php_sapi_name();
-					
-			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.		
+
+			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.
 			if($api == 'cgi' || $api == 'apache' || $api == 'apache2handler') {
 				$this->results->test('checkServerAPI', 'Server API', $api, 1);
 			} else {
 				$this->results->test('checkServerAPI', 'Server API', $api, 0, 'Unknown Server API');
 			}
 		}
-		
+
 		/**
 		 * Checks for maximum execution time
 		 *
@@ -1080,7 +1080,7 @@
 				$this->results->test('checkExecTime', 'Max Execution Time', $maxExecTime, 0, $recom);
 			}
 		}
-		
+
 		/**
 		 * Checks the OS the server is running.
 		 *
@@ -1090,7 +1090,7 @@
 
 			// get OS the server is running.
 			$os = php_uname('s');
-			
+
 			// these three OS are known, display warning if an unknown one is shown.
 			if($os == 'FreeBSD' || $os == 'SunOS' || $os == 'Linux' || $os == 'Darwin' || strtoupper(substr($os, 0, 3)) === 'WIN') {
 				$this->results->test('checkOS', 'OS', $os, 1);
@@ -1098,7 +1098,7 @@
 				$this->results->test('checkOS', 'OS', $os, 0, 'Unknown Operating System');
 			}
 		}
-		
+
 		/**
 		 * Checks the memory limit.
 		 * @return void
@@ -1110,16 +1110,16 @@
 
 			// set the good limit, which is 32M
 			$glimit = '32M';
-			
+
 			// convert both to bytes
 			$mlimitBytes = $this->returnBytes($mlimit);
 			$glimitBytes = $this->returnBytes($glimit);
-			
-			
+
+
 			// if ours is more than recommended...
 			if($mlimitBytes >= $glimitBytes) {
 				$this->results->test('checkMemoryLimit', 'Memory Limit', $mlimit, 1);
-				
+
 			// else if no memory limit in place, so that's good, too...
 			} else if (empty($mlimit)) {
 				$this->results->test('checkMemoryLimit', 'Memory Limit', "No memory limit in effect!", 1);
@@ -1133,57 +1133,57 @@
 				}
 				$recom .= 'If you have access to the php.ini configuration file, please set the memory_limit
 					to at least 32M or ask your hosting company to do so.';
-					
+
 				$this->results->test('checkMemoryLimit', 'Memory Limit', $mlimit, -1, $recom);
 			}
-			
+
 		}
-	
+
 		/**
 		 * Checks the upload limit for Typo3's default.
 		 *
 		 * @return void
 		 **/
 		function checkUploadLimit() {
-			
+
 			// get max upload filesize
 			$ulimit = ini_get('upload_max_filesize');
 			$postLimit = ini_get('post_max_size');
-			
+
 			// good value = default in Typo3 is 10M
 			$good = '10M';
 			$bad = '2M';
-			
+
 			// convert both to bytes
 			$postBytes = $this->returnBytes($postLimit);
 			$bytes = $this->returnBytes($ulimit);
 			$gbytes = $this->returnBytes($good);
 			$bbytes = $this->returnBytes($bad);
-			
+
 			// if more than good, all good.
 			// else if lower than min, fail.
 			// else it could still be okay, warning.
 			if($bytes >= $gbytes && $postBytes >= $bytes) {
 				$this->results->test('checkUploadLimit', 'Max Upload Filesize', $ulimit, 1);
 			} else if ($bytes < $bbytes) {
-				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise 
+				$recom = 'Max upload file size is much lower than the TYPO3 default. Please raise
 					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
 					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, -1, $recom);
 			} else if ($bytes < $gbytes){
-				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising 
+				$recom = 'Max upload file size is lower than the TYPO3 default. Consider raising
 					upload_max_filesize to at least 10M. This can be set in the php.ini configuration
 					file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			} else if ($postBytes < $bytes) {
-				$recom = 'Max upload file size ('.$ulimit.') is larger than allowed POST data ('.$postLimit.'). 
-					This is okay, but the upload filesize will be limited to '.$postLimit.'. Consider raising 
-					post_max_size to at least '.$ulimit.' to take advantage of larger file uploads. This can be 
+				$recom = 'Max upload file size ('.$ulimit.') is larger than allowed POST data ('.$postLimit.').
+					This is okay, but the upload filesize will be limited to '.$postLimit.'. Consider raising
+					post_max_size to at least '.$ulimit.' to take advantage of larger file uploads. This can be
 					set in the php.ini configuration file if you can access it, or ask your hosting company to do so.';
 				$this->results->test('checkUploadLimit', "Max Upload Filesize", $ulimit, 0, $recom);
 			}
 		}
-		
+
 		/**
 		 * Takes PHP style number and converts to byte.
 		 *
@@ -1191,10 +1191,10 @@
 		 **/
 		function returnBytes($val) {
 			if(empty($val)) return 0;
-			
+
 			$val = trim($val);
 		   	$last = strtolower($val{strlen($val)-1});
-		
+
 		   	switch($last) {
 		       	// The 'G' modifier is available since PHP 5.1.0
 		       	case 'g':
@@ -1207,7 +1207,7 @@
 
 		   	return $val;
 		}
-		
+
 		/**
 		 * Makes sure that exec() is working.
 		 *
@@ -1218,7 +1218,7 @@
 			if($win) {
 				exec('dir', $output);
 			} else {
-				exec('ls -al', $output);				
+				exec('ls -al', $output);
 			}
 
 			if($output) {
@@ -1231,24 +1231,24 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * Check email capailities
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Email extends Module {
-		
+
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = "Email Test";
 		}
-		
+
 		function check() {
 			$this->checkMail();
 		}
-		
+
 		function evaluate() {
 			$status = $this->results->getStatus('checkMail');
 			switch ($status) {
@@ -1262,7 +1262,7 @@
 					file to enter one.';
 					$this->results->overall(0, $recom, false);
 					break;
-				
+
 				case -1:
 					$recom = 'The email wasn\'t send on to the delivery system. Please check your web server\'s error log and mail logs to
 					get more details, or ask your administrator for assistance.';
@@ -1274,7 +1274,7 @@
 			}
 
 		}
-		
+
 		/**
 		 * Checks the mail() function by sending a test email to the specified address
 		 *
@@ -1282,7 +1282,7 @@
 		 **/
 		function checkMail() {
 			$to = $GLOBALS['email'];
-			
+
 			if(!empty($to)) {
 				$from = 'From: WEC Server Checker <noreply@example.com>';
 				$subject = 'WEC Server Checker Test Email';
@@ -1293,80 +1293,80 @@
 				// mail() returns true if the email was passed to delivery
 				if($out) {
 					$this->results->test('checkMail', 'email sending via mail()', 'info', 1);
-				
+
 				// and false if not
 				} else {
-					$this->results->test('checkMail', 'email sending via mail()', 'failed', -1);					
+					$this->results->test('checkMail', 'email sending via mail()', 'failed', -1);
 				}
 
 			} else {
 				$this->results->test('checkMail', 'email sending via mail()', 'info', 0);
-			}	
+			}
 		}
 	}
-	
+
 	/**
 	 * Check graphic capabilities like GD and Image- or GraphicsMagick
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Graphics extends Module {
-		
+
 		var $PATHS = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/local/bin';
-		
+
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = "Graphics Test";
 		}
-		
+
 		function check() {
 			$this->checkGD();
 			$this->checkGM();
 			$this->checkIM();
 		}
-		
+
 		function evaluate() {
-			$allgood = ($this->results->getStatus('checkGD') == 1) 
+			$allgood = ($this->results->getStatus('checkGD') == 1)
 				&& ($this->results->getStatus('checkGM') == 1)
 				&& ($this->results->getStatus('checkIM') == 1);
-			
-			$GDandOther = ($this->results->getStatus('checkGD') == 1) 
+
+			$GDandOther = ($this->results->getStatus('checkGD') == 1)
 				&& (($this->results->getStatus('checkGM') == 1)
  				|| ($this->results->getStatus('checkIM') == 1));
 
 			$Otheronly = ($this->results->getStatus('checkGM') == 1)
 			|| ($this->results->getStatus('checkIM') == 1);
-			
-			$GDonly = ($this->results->getStatus('checkGD') == 1) 
+
+			$GDonly = ($this->results->getStatus('checkGD') == 1)
 				&& !(($this->results->getStatus('checkGM') == 1)
  				|| ($this->results->getStatus('checkIM') == 1));
-			
+
 			// got all libs, wow!
 			if($allgood) {
-				$this->results->overall(1, 'You have all required graphics libraries', false);					
-			
+				$this->results->overall(1, 'You have all required graphics libraries', false);
+
 			// still good
 			} else if($GDandOther){
 				$this->results->overall(1, 'You have all required libraries', false);
-			
+
 			// no GD
 			} else if ($Otheronly) {
 				$recom = 'You are missing the GD library, but you do have Graphics- or ImageMagick installed, which should be enough.';
 				$this->results->overall(0, $recom);
-			
+
 			// GD only
 			} else if($GDonly) {
 				$recom = 'You are missing an important graphics library. Please install either Graphics- or ImageMagick or ask your administrator for assistance.';
 				$this->results->overall(-1, $recom);
-			
+
 			} else {
 				$recom = 'You don\'t have any graphics libraries installed. Please install at least Graphics- or ImageMagick.';
 				$this->results->overall(-1, $recom);
 			}
 
 		}
-		
+
 		/**
 		 * Checks if the GD extension is loaded
 		 *
@@ -1384,7 +1384,7 @@
 				$this->results->test('checkGD', 'GD library', 'failed', 0, $recom);
 			}
 		}
-		
+
 		/**
 		 * Checks for graphicsmagick
 		 *
@@ -1393,7 +1393,7 @@
 		function checkGM() {
 
 			$paths = explode(':', $this->PATHS);
-			
+
 			$found = false;
 			foreach( $paths as $key => $value ) {
 				exec($value.'/gm', $output);
@@ -1407,7 +1407,7 @@
 				$this->results->test('checkGM', 'GraphicsMagick library', 'failed', -1, $recom);
 			}
 		}
-		
+
 		/**
 		 * Checks for imagemagick
 		 *
@@ -1416,7 +1416,7 @@
 		function checkIM() {
 
 			$paths = explode(':', $this->PATHS);
-			
+
 			$found = false;
 			foreach( $paths as $key => $value ) {
 				exec($value.'/combine', $output);
@@ -1431,55 +1431,55 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * Does some basic MySQL checks.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class MySQL extends Module {
-		
+
 		var $running;
-		
+
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = "MySQL Database Test";
 			$this->running = false;
 		}
-		
-		
+
+
 		function check() {
 			$this->checkStatus();
-			$this->checkClient();			
+			$this->checkClient();
 			$this->checkSafeMode();
-			
-			if($this->running) {				
+
+			if($this->running) {
 				$this->checkPersistentConnection();
 				$this->checkServer();
-				$this->checkHost();		
+				$this->checkHost();
 			}
 		}
-		
+
 		function evaluate() {
 			$noinfo = $this->results->getStatus('checkStatus') == 0;
 			$allgood = $this->running && $this->results->getStatus('checkPersistentConnection') == 1
 				&& $this->results->getStatus('checkSafeMode') == 1;
 			$notrunning = !$this->running;
-			
+
 			if ($noinfo) {
 				$recom = 'Testing not possible.';
-				$this->results->overall(0, $recom);				
+				$this->results->overall(0, $recom);
 			} else if ($notrunning) {
-				$this->results->overall(-1, 'MySQL doesn\'t appear to be running.', false);				
+				$this->results->overall(-1, 'MySQL doesn\'t appear to be running.', false);
 			} elseif($allgood) {
-				$this->results->overall(1, 'MySQL is okay');				
+				$this->results->overall(1, 'MySQL is okay');
 			} else {
 				$this->results->overall(-1, 'There have been errors:');
 			}
 
 		}
-		
+
 		/**
 		 * Checks the MySQL host connection
 		 *
@@ -1489,7 +1489,7 @@
 			$host = mysql_get_host_info();
 			$this->results->test('checkHost', 'Host Info', $host, 1);
 		}
-		
+
 		/**
 		 * Checks whether we are running SQL safe mode
 		 *
@@ -1497,7 +1497,7 @@
 		 **/
 		function checkSafeMode() {
 			$safe = ini_get('sql.safe_mode');
-			
+
 			if(!$safe) {
 				$this->results->test('checkSafeMode', 'SQL Safe Mode', $version, 1);
 			} else {
@@ -1514,19 +1514,19 @@
 			$version = mysql_get_client_info();
 			$this->results->test('checkClient', 'Client Version', $version, 1);
 		}
-		
-		
+
+
 		/**
 		 * Evaluates the MySQL server version.
 		 *
 		 * @return void
 		 **/
 		function checkServer() {
-			
+
 			// Establish MySQL connection and get server info if successful.
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			$version = mysql_get_server_info($con);
-			
+
 			// get major MySQL version
 			$xVersion = explode('.', $version);
 			$majorVersion = $xVersion[0];
@@ -1537,34 +1537,34 @@
 				$this->results->test('checkServer', 'Server Version', $version, 1);
 			} else {
 				$this->results->test('checkServer', 'Server Version', $version, -1, "MySQL Version is not compatible!");
-			}				
+			}
 		}
-		
+
 		/**
 		 * Checks for MySQL
 		 *
 		 * @return void
 		 **/
 		function checkStatus() {
-			
+
 			// check if user has entered their information
 			if(empty($GLOBALS['dbUser']) && empty($GLOBALS['dbPass'])) {
-				$recom = 'Please edit the top of this file and enter your database information 
+				$recom = 'Please edit the top of this file and enter your database information
 				as provided by your hosting company or system manager.';
 				$this->results->test('checkStatus', 'Status', 'Missing Information', 0, $recom);
 				return;
 			}
-			
+
 			$con = mysql_connect($GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass']);
 			if($con != false) {
 				$this->results->test('checkStatus', 'Status', 'Running', 1);
-				$this->running = true;			
+				$this->running = true;
 			} else {
 				$this->results->test('checkStatus', 'Status', 'Running', -1, mysql_error());
 			}
 
 		}
-		
+
 		/**
 		 * Trys to establish a persistent connection to the MySQL server.
 		 *
@@ -1582,7 +1582,7 @@
 			mysql_close($link);
 		}
 	}
-		
+
 	/**
 	 * Checks file permissions
 	 *
@@ -1595,19 +1595,19 @@
 		 **/
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = 'File Permissions Test';
 		}
-		
+
 		function check() {
 			$this->check777();
 			$this->checkTempPermissions();
 			// $this->checkR();
 			$this->symlinks();
 		}
-		
+
 		function evaluate() {
-			
+
 			$allgood = $this->results->getStatus('symlinks') == 1 && $this->results->getStatus('checkTempPermissions') == 1;
 			$failwin = 	$this->results->getStatus('symlinks') != 1 && isWindows();
 			$failnowin = $this->results->getStatus('symlinks') == -1 && !isWindows();
@@ -1625,7 +1625,7 @@
 				$this->results->overall(0, $recom, false);
 			// no symlink was created, but we aren't using Windows or PHPsuExec; that's not good.
 			} else if($warningnowin && $phpsuexec) {
-				$recom = 'Symlinks can be created, but not read. The reason for this is unknown. Please post the 
+				$recom = 'Symlinks can be created, but not read. The reason for this is unknown. Please post the
 				test results and server configuration, if known, to the WEC Install forum (see link below).';
 				$this->results->overall(0, $recom, false);
 			// using windows
@@ -1640,11 +1640,11 @@
 				if (!$GLOBALS['t3installed']) $recom .= ' Please be sure to use the zip package to install TYPO3.';
 				$this->results->overall(-1, $recom, false);
 			}
-			
+
 			if($this->results->getStatus('checkTempPermissions') == 0) {
 				$recom = "Cannot determine file permissions needed by this script because required PHP functions aren't
 					allowed. Please see the PHP Scripting Test results for more info.";
-				$this->results->overall(0, $recom, false);				
+				$this->results->overall(0, $recom, false);
 			} else if ($this->results->getStatus('checkTempPermissions') == -1) {
 				$recom = "This script is unable to create temporary folders. Please make sure file permissions are correct.";
 				$this->results->overall(-1, $recom, false);
@@ -1663,30 +1663,30 @@
 
 			// clear file cache just to be sure
 			clearstatcache();
-			
+
 			// check if tmp dir already exists for some crazy reason and delete it
 			// and everything in it.
 			if(file_exists('tmp')) {
 				foreach(glob('tmp/*') as $file) {
-					unlink($file);					
+					unlink($file);
 				}
 				rmdir('tmp');
 			}
-			
+
 			// now create a folder with each of the permissions defined above.
 			foreach($perms as $perm) {
-				$out = mkdir('tmp', octdec($perm));			
+				$out = mkdir('tmp', octdec($perm));
 
 				// if that didn't work we have a problem
 				if(!$out) {
 					$this->results->test('checkTempPermissions', 'Minimum write permissions', "N/A", -1, 'Could not create a temporary test folder; please check directory permissions.');
 					return;
 				}
-				
+
 				// if the previous did work, create a temp file and get the return value
 				$test = touch('tmp/test.php');
 
-				// if write was successful, save the file permissions in the results. It will 
+				// if write was successful, save the file permissions in the results. It will
 				// overwrite this until one of them doesn't work, and leave it at the minimum
 				// that did work which is exactly what we want.
 				if($test) $this->results->test('checkTempPermissions', 'Minimum write permissions', $perm, 1);
@@ -1697,34 +1697,34 @@
 			}
 
 		}
-		
+
 		/**
 		 * Checks if 777 permissions will work.
 		 *
 		 * @return void
 		 **/
 		function check777() {
-			
+
 			// if we cannot exec, show warning
 			if($GLOBALS['mc']->getTestStatus('PHP Scripting Test', 'checkFunctions') !== 1) {
 				$this->results->test('check777', '777 Permissions allowed', 'Can\'t determine', 0);
 				return;
 			}
-			
+
 			// create temp directory
-			$out = mkdir('tmp', octdec('0775'));	
-							
+			$out = mkdir('tmp', octdec('0775'));
+
 			// create a temp file that we can read over http.
 			$fileHandle = fopen('tmp/test.php', 'w+');
 			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
 			fclose($fileHandle);
-			
+
 			// get headers for the file we just created
 			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-			
+
 			// chmod the file to 777
 			$ret = exec('chmod 777 tmp/test.php');
-			
+
 			// get headers for the chmodded file
 			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
 
@@ -1734,122 +1734,122 @@
 			} else {
 				$this->results->test('check777', '777 Permissions allowed', 'No', 1);
 			}
-			
+
 			// remove the temporary file and folder
 			unlink('tmp/test.php');
 			rmdir('tmp');
-			
+
 		}
-		
+
 		/**
 		 * Check whether symlinks work
 		 *
 		 * @return void
 		 **/
 		function symlinks() {
-			
+
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir('tmp', octdec($perms));		
+			$out = mkdir('tmp', octdec($perms));
 
 			// create a temp file that we can read over http.
 			$fileHandle = fopen('tmp/test.php', 'w+');
 			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
 			fclose($fileHandle);
-			
+
 			// now create a symlink to the file to check whether that works
 			$funcExists = function_exists('symlink');
 			if($funcExists) {
-				$sym = symlink('test.php', 'tmp/symtest.php');	
+				$sym = symlink('test.php', 'tmp/symtest.php');
 			} else {
 				$sym = false;
 			}
-					
+
 			// get headers for the file and symlink we just created
 			$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
 			$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
-			$headers500 = strpos($sHeaders[0], '500') !== false;	
+			$headers500 = strpos($sHeaders[0], '500') !== false;
 			$phpsuexec = $this->results->getStatus('check777');
-			
+
 			// check symlink
 			if(!$sym && $funcExists) {
 				$recom = 'Symlinks couldn\'t be created.';
 				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);
 			} else if (!$sym && !$funcExists) {
 				$recom = 'Symlinks couldn\'t be created because the PHP function \'symlink\' is not available.';
-				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);	
+				$this->results->test('symlinks', 'Symlinks', 'Problem', -1, $recom);
 			} else if ($sym && $phpsuexec) {
 				if($GLOBALS['t3installed']) {
-					$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
+					$this->results->test('symlinks', 'Symlinks', 'Success', 1);
 				} else {
-					$recom = 'When you install TYPO3, either use the .zip package or make sure that you copy the 
+					$recom = 'When you install TYPO3, either use the .zip package or make sure that you copy the
 					index.php file from typo3_src to the TYPO3 root.';
 					$this->results->test('symlinks', 'Symlinks', 'Success', 0, $recom);
 				}
 
 			} else if ($sym && !$headers500) {
-				$this->results->test('symlinks', 'Symlinks', 'Success', 1);					
+				$this->results->test('symlinks', 'Symlinks', 'Success', 1);
 			} else if ($sym && $headers500) {
-				$recom = 'Symlinks can be created, but symlinked files cannot be read. The 
+				$recom = 'Symlinks can be created, but symlinked files cannot be read. The
 					reason for this might be that PHPsuExec is installed.';
 				$this->results->test('symlinks', 'Symlinks', 'Problem', 0, $recom);
 			}
-			
+
 			// remove the temporary file and folder
 			unlink('tmp/test.php');
 			unlink('tmp/symtest.php');
 			rmdir('tmp');
 		}
 	}
-	
+
 	/**
 	 * This class tests the apache environment for mod_rewrite and .htaccess stuff.
 	 *
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class Apache extends Module {
-		
+
 		/**
 		 * Constructor
 		 *
 		 **/
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = 'Apache Web Server Test';
 		}
-		
+
 		function check() {
 			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkTempPermissions') === 1) {
 				$this->checkVersion();
 				$this->checkModRewrite();
 				$this->checkModSecurity();
 				$this->override();
-				$this->checkRewrite();				
+				$this->checkRewrite();
 			}
 
 		}
-		
+
 		function evaluate() {
-			
+
 			// if there are file permissions errors, don't bother doing these tests
 			if($GLOBALS['mc']->getTestStatus('File Permissions Test', 'checkTempPermissions') !== 1) {
 				$this->results->overall(-1, 'Please fix the file permissions first.', false);
 				return;
 			}
-			
-			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache' 
+
+			$isApache = ($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache'
 				|| $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'apache2handler'
 				|| $GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkServerAPI') == 'cgi'
 			);
-			$allgood = ($isApache && 
-				$this->results->getStatus('checkModRewrite') == 1 && 
-				$this->results->getStatus('checkRewrite') == 1 && 
+			$allgood = ($isApache &&
+				$this->results->getStatus('checkModRewrite') == 1 &&
+				$this->results->getStatus('checkRewrite') == 1 &&
 				$this->results->getStatus('override') == 1
 			);
 			$noApacheRewrite = ($this->results->getStatus('checkRewrite') == 1 && !$isApache);
 			$ApacheNoRewrite = ($this->results->getStatus('checkRewrite') != 1 && $isApache);
-			
+
 			// apache but mod_rewrite not found
 			if($allgood) {
 				$this->results->overall(1, 'The Apache Web Server and the RealURL extension should work correctly.', false);
@@ -1865,13 +1865,13 @@
 				$recom = "The mod_rewrite module could not be found. It's necessary for the RealURL extension, so if you are
 					having problems with your TYPO3 site URLs, try uninstalling the extension in the extension manager.";
 				$this->results->overall(0, $recom, false);
-			
+
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') == 1) {
 				$this->results->overall(1, 'All works well.', false);
-					
+
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 1) {
 					$this->results->overall(1);
-				
+
 			} else if($noApacheRewrite) {
 				$recom = 'Even though you are not using Apache, rewriting URLs works fine!';
 				$this->results->overall(1, $recom, false);
@@ -1882,21 +1882,21 @@
 				$recom = 'Rewriting URLs didn\'t work at all. Please report this to the WEC Support forum.';
 				$this->results->overall(-1, $recom);
 			}
-			
+
 			if ($isApache && $this->results->getStatus('override') != 1) {
 				$recom = "Overriding settings via .htaccess files is not allowed but required for RealURL to work.
 					Please check that AllowOverride All is set in your Apache config or ask your host to do so.";
 				$this->results->overall(-1, $recom, false);
 			}
 		}
-		
+
 		/**
 		 * Checks for mod_security
 		 *
 		 * @return void
 		 **/
 		function checkModSecurity() {
-		
+
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
 			if(function_exists('apache_get_modules') && in_array('mod_security', apache_get_modules())) {
@@ -1907,28 +1907,28 @@
 				$this->results->test('checkModSecurity', 'mod_security', 'not found', 1);
 			}
 		}
-		
+
 		/**
 		 * Checks for the presence of mod_rewrite.
 		 *
 		 * @return void
 		 **/
 		function checkModRewrite() {
-			
+
 			// only do this if we can use apache php functions, i.e. PHP
 			// is not running as CGI
 			if(function_exists('apache_get_modules')) {
-				
+
 				if (in_array('mod_rewrite', apache_get_modules())) {
-					$this->results->test('checkModRewrite', 'mod_rewrite', 'present', 1);		
+					$this->results->test('checkModRewrite', 'mod_rewrite', 'present', 1);
 				} else {
 					$this->results->test('checkModRewrite', 'mod_rewrite', 'not found', -1);
 				}
 			} else {
-				$this->results->test('checkModRewrite', 'mod_rewrite', 'unable to determine this setting due to the server configuration', 0);		
+				$this->results->test('checkModRewrite', 'mod_rewrite', 'unable to determine this setting due to the server configuration', 0);
 			}
 		}
-		
+
 		/**
 		 * Returns the Apache version.
 		 *
@@ -1951,7 +1951,7 @@
                 }
             }
 		}
-		
+
 		/**
 		 * Checks whether .htaccess files are allowed.
 		 *
@@ -1969,26 +1969,26 @@
 			RewriteEngine On \n
 			RewriteRule ^test.php rewrite_test.php \n
 			</IfModule>";
-			
+
 			// and this goes into our php file
 			$php = '<?php echo "Hello World!"; ?>';
-			
+
 			// write our htaccess file
 			$fileHandle = fopen('test123/.htaccess', 'w+');
 			$bla = fwrite($fileHandle, $htaccess);
 			fclose($fileHandle);
-			
+
 			// write our php file
 			$fileHandle = fopen('test123/rewrite_test.php', 'w+');
 			$bla = fwrite($fileHandle, $php);
 			fclose($fileHandle);
-			
+
 			// Now check headers on the real file...
 			$rheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/rewrite_test.php');
-			
+
 			// .. and the virtual file
 			$vheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/test.php');
-			
+
 			// if we get a 200 OK and the headers are the same, it worked!
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
 				$this->results->test('checkRewrite', 'Rewrite URLs', 'success', 1);
@@ -1997,40 +1997,40 @@
 				$recom = "Rewriting URLs failed.";
 				$this->results->test('checkRewrite', 'Rewrite URLs', 'Failed', -1, $recom);
 			}
-		
+
 			// clean up
 			unlink('test123/.htaccess');
 			unlink('test123/rewrite_test.php');
 			rmdir('test123');
 		}
-		
+
 		/**
 		 * Makes sure overriding settings with .htaccess is allowed
 		 *
 		 * @return void
 		 **/
 		function override() {
-			
+
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
-			
+
 			$out = mkdir('test123', octdec($perms));
-			
+
 			// write empty index.html file
 			$fileHandle = fopen('test123/index.html', 'w+');
 			$bla = fwrite($fileHandle, '');
 			fclose($fileHandle);
-			
+
 			// Now check headers without .htaccess file
 			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
 
 			// syntax error in .htaccess
 			$htaccess = "SecFEng On";
-			
+
 			// write our htaccess file
 			$fileHandle = fopen('test123/.htaccess', 'w+');
 			$bla = fwrite($fileHandle, $htaccess);
 			fclose($fileHandle);
-			
+
 			// check headers with .htaccess file
 			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
 
@@ -2041,11 +2041,11 @@
 				$recom = 'Overriding Apache settings with .htaccess files is not allowed.';
 				$this->results->test('override', 'Allow Override', 'Failed', -1, $recom);
 			}
-			
+
 			// clean up
 			unlink('test123/.htaccess');
 			unlink('test123/index.html');
-			rmdir('test123');	
+			rmdir('test123');
 		}
 	}
 
@@ -2056,17 +2056,17 @@
 	 * @author Web-Empowered Church Team <developer@webempoweredchurch.org>
 	 **/
 	class TYPO3 extends Module {
-		
+
 		/**
 		 * Constructor
 		 *
 		 **/
 		function __construct() {
 			parent::__construct();
-			
+
 			$this->title = 'TYPO3 Test';
 		}
-		
+
 		function check() {
 
 			$this->checkBaseTag();
@@ -2078,10 +2078,10 @@
 			$this->checkTypo3temp();
 			$this->checkTypo3conf();
 		}
-		
+
 		function evaluate() {
-			
-			$allgood = ($this->results->getStatus('checkBaseTag') == 1 && 
+
+			$allgood = ($this->results->getStatus('checkBaseTag') == 1 &&
 				$this->results->getStatus('checkHtaccess') == 1 &&
 				$this->results->getStatus('checkRealURL') == 1 &&
 				$this->results->getStatus('checkFileadmin') == 1 &&
@@ -2090,28 +2090,28 @@
 				$this->results->getStatus('checkTypo3conf') == 1 &&
 				$this->results->getStatus('rootSym') == 1
 			);
-			
-			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 && 
+
+			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 &&
 				$this->results->getStatus('checkHtaccess') == 1 &&
 				$this->results->getStatus('checkRealURL') != 1
 			);
-			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 && 
+			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 &&
 				$this->results->getStatus('checkHtaccess') != 1 &&
 				$this->results->getStatus('checkRealURL') != 1
 			);
-			$directories = ($this->results->getStatus('checkFileadmin') == 1 && 
+			$directories = ($this->results->getStatus('checkFileadmin') == 1 &&
 				$this->results->getStatus('checkUploads') == 1 &&
 				$this->results->getStatus('checkTypo3temp') == 1 &&
 				$this->results->getStatus('checkTypo3conf') == 1
 			);
 			$rootSym = $this->results->getStatus('rootSym') == 1;
 			$rootSymWarn = $this->results->getStatus('rootSym') == 0;
-			
+
 			// if everything is good, say it and quit
 			if ($allgood) {
 				$this->results->overall(1, 'Everything is alright');
 				return;
-			} 
+			}
 
 			if($rootSym) {
 				$this->results->overall(1);
@@ -2123,7 +2123,7 @@
 				 instructions below to try and fix this.';
 				$this->results->overall(-1, $recom);
 			}
-			
+
 			// eval realurl results
 			if ($realurlhtthere) {
 				$recom = "RealURL didn't work because the wrong .htaccess file is being used. Make sure you
@@ -2134,22 +2134,22 @@
 				 it from the WEC Starter Package to your TYPO3 root directory.";
 				$this->results->overall(-1, $recom);
 			}
-			
+
 			// eval directory results
 			if(!$directories) {
 				$recom = 'Some directories weren\'t writable. Please check the directory permissions.';
 				$this->results->overall(-1, $recom);
 			}
-			
+
 		}
-		
+
 		/**
 		 * Checks for the base tag in the TYPO3 install to see if it has been changed from the default.
 		 *
 		 * @return void
 		 **/
 		function checkBaseTag() {
-			
+
 			// open the site url, as defined above, and read
 			// the first few kb of it.
 			$handle = fopen($GLOBALS['TYPO3WebPath'], 'r');
@@ -2157,7 +2157,7 @@
 
 			// search for the base tag url
 			preg_match('!.*<base href="(.*)".*>!', $site, $output);
-			
+
 			// compare the base tag url with the default, which should have been changed.
 			if($output[1] == 'http://demo.webempoweredchurch.org/') {
 				$recom = 'The base tag is still at its default value and needs to be changed
@@ -2168,10 +2168,10 @@
 					to the address of your TYPO3 installation.';
 				$this->results->test('checkBaseTag', 'Base Tag', $output[1], -1, $recom);
 			} else {
-				$this->results->test('checkBaseTag', 'Base Tag', $output[1], 1);				
+				$this->results->test('checkBaseTag', 'Base Tag', $output[1], 1);
 			}
 		}
-		
+
 		/**
 		 * Checks whether the .htaccess file is present.
 		 *
@@ -2186,21 +2186,21 @@
 				$this->results->test('checkHtaccess', '.htaccess file', 'not found', -1, $recom);
 			}
 		}
-		
+
 		/**
 		 * Checks if the root page can be read via symlink.
 		 *
 		 * @return void
 		 **/
 		function rootSym() {
-						
+
 			// get headers for TYPO3 root
 			$headers = $this->getHeaders($GLOBALS['scriptPath']);
-			$headers500 = strpos($headers[0], '500') !== false;	
+			$headers500 = strpos($headers[0], '500') !== false;
 
 			// check headers
  			if (!$headers500) {
-				$this->results->test('rootSym', 'TYPO3 index.php', 'Success', 1);					
+				$this->results->test('rootSym', 'TYPO3 index.php', 'Success', 1);
 			} else if ($headers500 && $GLOBALS['mc']->getTestResult('File Permissions Test', 'check777') == 'No') {
 				$recom = 'Copy index.php from the typo3/ directory into the TYPO3 root directory.';
 				$this->results->test('rootSym', 'TYPO3 index.php', 'Problem', -1, $recom);
@@ -2221,12 +2221,12 @@
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
 			$norm = fread($fileHandle, 1024);
 			fclose($fileHandle);
-			
+
 			// get the Learn & Grow page rewritten
 			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'learn_grow/', 'r');
 			$rewr = fread($fileHandle, 1024);
 			fclose($fileHandle);
-						
+
 			// Now check headers on the normal page...
 			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=77');
 
@@ -2240,7 +2240,7 @@
 
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
-				$recom = 'Test couldn\'t run. The wrong page identifier was used. 
+				$recom = 'Test couldn\'t run. The wrong page identifier was used.
 					Please report this issue on the WEC Support forums.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
 
@@ -2257,35 +2257,35 @@
 				$this->results->test('checkRealURL', 'RealURL', 'Failed', -1, 'Unknown error. Headers: ' . $rheaders[0] . '<br />' . $vheaders[0]);
 			}
 		}
-		
+
 		/**
 		 * Checks read and write for fileadmin inside TYPO3
 		 *
 		 * @return void
 		 **/
 		function checkFileadmin() {
-			
+
 			// create paths
 			$path = $GLOBALS['TYPO3Path'] . 'fileadmin' . '/';
 			$webPath = $GLOBALS['TYPO3WebPath'] . 'fileadmin' . '/';
-			
+
 			// file content
 			$file = '<?php echo "Hello World!"; ?>';
-			
+
 			// open file
 			$link = fopen($path . 'test.php', 'w+');
-			
+
 			$write = fwrite($link, $file);
-			
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the fileadmin directory. Please check the directory permissions.';
 				$this->results->test('checkFileadmin', 'fileadmin', 'not writable', 0, $recom);
 				return null;
 			}
-			
+
 			fclose($link);
-					
+
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
@@ -2294,39 +2294,39 @@
 				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkFileadmin', 'fileadmin', 'Could not access file over HTTP.', 0, $recom);
 			}
-			
+
 			unlink($path . 'test.php');
-			
+
 		}
-		
+
 		/**
 		 * Checks read and write for typo3conf inside TYPO3
 		 *
 		 * @return void
 		 **/
 		function checkTypo3conf() {
-			
+
 			// create paths
 			$path = $GLOBALS['TYPO3Path'] . 'typo3conf' . '/';
 			$webPath = $GLOBALS['TYPO3WebPath'] . 'typo3conf' . '/';
-			
+
 			// file content
 			$file = '<?php echo "Hello World!"; ?>';
-			
+
 			// open file
 			$link = fopen($path . 'test.php', 'w+');
-			
+
 			$write = fwrite($link, $file);
-			
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the typo3conf directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3conf', 'typo3conf', 'not writable', 0, $recom);
 				return null;
 			}
-			
+
 			fclose($link);
-					
+
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
@@ -2335,39 +2335,39 @@
 				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkTypo3conf', 'typo3conf', 'Could not access file over HTTP.', 0, $recom);
 			}
-			
+
 			unlink($path . 'test.php');
-			
+
 		}
-		
+
 		/**
 		 * Checks read and write for typo3temp inside TYPO3
 		 *
 		 * @return void
 		 **/
 		function checkTypo3temp() {
-			
+
 			// create paths
 			$path = $GLOBALS['TYPO3Path'] . 'typo3temp' . '/';
 			$webPath = $GLOBALS['TYPO3WebPath'] . 'typo3temp' . '/';
-			
+
 			// file content
 			$file = '<?php echo "Hello World!"; ?>';
-			
+
 			// open file
 			$link = fopen($path . 'test.php', 'w+');
-			
+
 			$write = fwrite($link, $file);
-			
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the typo3temp directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3temp', 'typo3temp', 'not writable', 0, $recom);
 				return null;
 			}
-			
+
 			fclose($link);
-					
+
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
@@ -2376,38 +2376,38 @@
 				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkTypo3temp', 'typo3temp', 'Could not access file over HTTP.', 0, $recom);
 			}
-			
-			unlink($path . 'test.php');	
+
+			unlink($path . 'test.php');
 		}
-		
+
 		/**
 		 * Checks read and write for uploads inside TYPO3
 		 *
 		 * @return void
 		 **/
 		function checkUploads() {
-			
+
 			// create paths
 			$path = $GLOBALS['TYPO3Path'] . 'uploads' . '/';
 			$webPath = $GLOBALS['TYPO3WebPath'] . 'uploads' . '/';
-			
+
 			// file content
 			$file = '<?php echo "Hello World!"; ?>';
-			
+
 			// open file
 			$link = fopen($path . 'test.php', 'w+');
-			
+
 			$write = fwrite($link, $file);
-			
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the uploads directory. Please check the directory permissions.';
 				$this->results->test('checkUploads', 'uploads', 'not writable', 0, $recom);
 				return null;
 			}
-			
+
 			fclose($link);
-					
+
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
@@ -2416,16 +2416,16 @@
 				$recom = 'File couldn\'t be read. Please check file permissions.';
 				$this->results->test('checkUploads', 'uploads', 'Could not access file over HTTP.', 0, $recom);
 			}
-			
+
 			unlink($path . 'test.php');
-			
+
 		}
 	}
-	
+
 	//-----------------------------------
 	//|			Helper methods			|
 	//-----------------------------------
-	
+
 	/**
 	 * Checks whether this OS is Windows
 	 *
@@ -2441,7 +2441,7 @@
 	//-----------------------------------
 	//|		Pull everything together	|
 	//-----------------------------------
-	
+
 	// register renderers
 	$rc->register('OverallResults');
 	$rc->register('RenderDetailed');
@@ -2454,14 +2454,14 @@
 	$mc->register('FilePermissions');
 	$mc->register('Apache');
 	$mc->register('Graphics');
-	if($GLOBALS['t3installed']) $mc->register('TYPO3');	
-	
+	if($GLOBALS['t3installed']) $mc->register('TYPO3');
+
 	// turn off error reporting. After all, that's what we're doing here.
 	error_reporting(0);
 
 	// run all the tests
 	$mc->runAll();
-	
+
 	// pass the results to the render controller
 	$rc->setResults($mc->getResults());
 
