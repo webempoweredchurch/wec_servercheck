@@ -979,6 +979,7 @@
 			$this->checkMemoryLimit();
 			$this->checkUploadLimit();
 			$this->checkFunctions();
+			$this->checkTraversal();
 		}
 
 		function evaluate() {
@@ -986,6 +987,7 @@
 				&& $this->results->getStatus('checkMemoryLimit') == 1
 				&& $this->results->getStatus('checkUploadLimit') == 1
 				&& $this->results->getStatus('checkExecTime') == 1
+				&& $this->results->getStatus('checkTraversal') == 1
 			);
 
 			$almostallgood = ($this->results->getStatus('checkVersion') == 1
@@ -998,7 +1000,8 @@
 				|| $this->results->getStatus('checkMemoryLimit') != 1
 				|| $this->results->getStatus('checkUploadLimit') != 1
 				|| $this->results->getStatus('checkExecTime') != 1
-				|| $this->results->getStatus('checkFunctions') != 1);
+				|| $this->results->getStatus('checkFunctions') != 1
+				|| $this->results->getStatus('checkTraversal') != 1);
 			$wrongVersion = $this->results->getStatus('checkVersion') == -1;
 			$badVersion = $this->results->getStatus('checkVersion') == 0;
 
@@ -1230,6 +1233,21 @@
 				$this->results->test('checkFunctions', 'Required Functions', 'failed', -1, $recom);
 			}
 		}
+		
+		/**
+		 * Checks max_traversal setting
+		 *
+		 * @return void
+		 **/
+		function checkTraversal() {
+			$max_traversal = ini_get('suhosin.executor.include.max_traversal');
+			if(empty($max_traversal) || $max_traversal >= 5) {
+				$this->results->test('checkTraversal', 'max_traversal', 'success', 1);
+			} else {
+				$recom = 'Failed. The suhosin.executor.include.max_traversal setting needs to be at least 5.';
+				$this->results->test('checkTraversal', 'max_traversal', $recom, -1);
+			}
+		}
 	}
 
 	/**
@@ -1312,10 +1330,17 @@
 	 **/
 	class Graphics extends Module {
 
-		var $PATHS = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/local/bin';
+		var $PATHS;
 
 		function __construct() {
 			parent::__construct();
+			
+			if(isWindows()) {
+				$this->PATHS =  array('c:\\php\\imagemagick\\', 'c:\\apache\\ImageMagick\\');
+			} else {
+				$this->PATHS = array('/usr/bin/','/bin/','/usr/sbin/','/sbin/','/usr/local/bin/','/opt/local/bin/');
+			}
+
 
 			$this->title = "Graphics Test";
 		}
@@ -1392,11 +1417,11 @@
 		 **/
 		function checkGM() {
 
-			$paths = explode(':', $this->PATHS);
+			$paths = $this->PATHS;
 
 			$found = false;
 			foreach( $paths as $key => $value ) {
-				exec($value.'/gm', $output);
+				exec($value.'gm', $output);
 				if(!empty($output)) $found = true;
 			}
 
@@ -1415,11 +1440,11 @@
 		 **/
 		function checkIM() {
 
-			$paths = explode(':', $this->PATHS);
+			$paths = $this->PATHS;
 
 			$found = false;
 			foreach( $paths as $key => $value ) {
-				exec($value.'/convert', $output);
+				exec($value.'convert', $output);
 				if(!empty($output)) $found = true;
 			}
 
