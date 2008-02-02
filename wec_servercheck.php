@@ -1928,8 +1928,10 @@
 				$recom = 'mod_security isn\'t compatible with some of TYPO3\'s features. Try adding the line "SecFilterEngine Off"
 					without quotes to the .htaccess file in your TYPO3 root.';
 				$this->results->test('checkModSecurity', 'mod_security', 'present', 0, $recom);
-			} else {
+			} else if (function_exists('apache_get_modules') && !in_array('mod_security', apache_get_modules())) {
 				$this->results->test('checkModSecurity', 'mod_security', 'not found', 1);
+			} else {
+				$this->results->test('checkModSecurity', 'mod_security', 'can\'t determine', 0);
 			}
 		}
 
