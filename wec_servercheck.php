@@ -1043,7 +1043,7 @@
 				$recom = 'There are a few severe issues with PHP 5.2.0 that prevent TYPO3 from working correctly.
 					Please either upgrade to a higher version or downgrade to a lower version.';
 				$this->results->test('checkVersion', 'Version', $version, 0, $recom);
-			} else if ($majorVersion == 4 || $majorVersion == 5) {
+			} else if (($majorVersion == 4 && $minorVersion >= 3) || $majorVersion == 5) {
 				$this->results->test('checkVersion', 'Version', $version, 1);
 			} else {
 				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version number is too low!");
@@ -1558,7 +1558,7 @@
 			$minorVersion = $xVersion[1];
 
 			// if it's MySQL 4 or 5, we should be good, otherwise display error.
-			if($majorVersion == 4 || $majorVersion == 5 || ($majorVersion == 3 && $minorVersion >= 23)) {
+			if($majorVersion == 5 || ($majorVersion == 4 && $minorVersion >= 1)) {
 				$this->results->test('checkServer', 'Server Version', $version, 1);
 			} else {
 				$this->results->test('checkServer', 'Server Version', $version, -1, "MySQL Version is not compatible!");
