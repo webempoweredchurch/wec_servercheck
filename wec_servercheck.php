@@ -2245,20 +2245,20 @@
 		function checkRealURL() {
 
 			// get the Learn & Grow page normally
-			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=77', 'r');
+			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=33', 'r');
 			$norm = fread($fileHandle, 1024);
 			fclose($fileHandle);
 
 			// get the Learn & Grow page rewritten
-			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'learn_grow/', 'r');
+			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'search/', 'r');
 			$rewr = fread($fileHandle, 1024);
 			fclose($fileHandle);
 
 			// Now check headers on the normal page...
-			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=77');
+			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=33');
 
 			// .. and the rewritten page
-			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'learn_grow/');
+			$vheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'search/');
 
 			// if we get a 200 OK and the headers are the same plus the content of both pages is
 			// identical, it worked
@@ -2267,7 +2267,7 @@
 
 			// if we don't get a 200 OK (i.e. 302 or 404), show a warning
 			} else if (strpos($rheaders[0], '200 OK') === false) {
-				$recom = 'Test couldn\'t run. The wrong page identifier was used.
+				$recom = 'Test couldn\'t run. The page we\'re checking for doesn\'t seem to exist anymore.
 					Please report this issue on the WEC Support forums.';
 				$this->results->test('checkRealURL', 'RealURL', 'failed', 0, $recom);
 
