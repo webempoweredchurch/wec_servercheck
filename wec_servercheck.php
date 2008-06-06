@@ -39,6 +39,10 @@
 	$GLOBALS['dbPass'] = '';
 
 	// your email to test the PHP mail() function
+	// The 'from' part should be fine as it is. If you know that your mail server 
+	// doesn't accept sending mail from unknown addresses, you may want to enter
+	// an existing email address on your domain.
+	$GLOBALS['from'] = 'noreply@example.com';
 	$GLOBALS['email'] = '';
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1272,7 +1276,7 @@
 			switch ($status) {
 				case 1:
 					$recom = 'An email was dispatched to the address you specified. If you receive it, everything is good.
-					If not, please check your mail logs or ask your administrator for assistance.';
+					If not, please check your mail logs or ask your administrator for assistance; there may be an issue with your mail server.';
 					$this->results->overall(1, $recom);
 					break;
 				case 0:
@@ -1302,7 +1306,7 @@
 			$to = $GLOBALS['email'];
 
 			if(!empty($to)) {
-				$from = 'From: WEC Server Checker <noreply@example.com>';
+				$from = 'From: WEC Server Checker <'.$GLOBALS['from'].'>';
 				$subject = 'WEC Server Checker Test Email';
 				$message = 'If you can read this, your server can successfully send emails!';
 
