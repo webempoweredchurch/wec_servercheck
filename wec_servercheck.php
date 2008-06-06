@@ -2247,10 +2247,10 @@
 		 **/
 		function checkRealURL() {
 
-			// get the Learn & Grow page normally
+			// get the Search page normally
 			$norm = file_get_contents($GLOBALS['TYPO3WebPath'] . 'index.php?id=33', TRUE, NULL, 0, 1024);
 
-			// get the Learn & Grow page rewritten
+			// get the Search page rewritten
 			$rewr = file_get_contents($GLOBALS['TYPO3WebPath'] . 'search/', TRUE, NULL, 0, 1024);
 
 			// Now check headers on the normal page...
