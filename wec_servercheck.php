@@ -2183,8 +2183,7 @@
 
 			// open the site url, as defined above, and read
 			// the first few kb of it.
-			$handle = fopen($GLOBALS['TYPO3WebPath'], 'r');
-			$site = fread($handle, 8192);
+			$site = file_get_contents($GLOBALS['TYPO3WebPath'], TRUE, NULL, 0, 8192);
 
 			// search for the base tag url
 			preg_match('!.*<base href="(.*)".*>!', $site, $output);
@@ -2249,14 +2248,10 @@
 		function checkRealURL() {
 
 			// get the Learn & Grow page normally
-			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'index.php?id=33', 'r');
-			$norm = fread($fileHandle, 1024);
-			fclose($fileHandle);
+			$norm = file_get_contents($GLOBALS['TYPO3WebPath'] . 'index.php?id=33', TRUE, NULL, 0, 1024);
 
 			// get the Learn & Grow page rewritten
-			$fileHandle = fopen($GLOBALS['TYPO3WebPath'] . 'search/', 'r');
-			$rewr = fread($fileHandle, 1024);
-			fclose($fileHandle);
+			$rewr = file_get_contents($GLOBALS['TYPO3WebPath'] . 'search/', TRUE, NULL, 0, 1024);
 
 			// Now check headers on the normal page...
 			$rheaders = $this->getHeaders($GLOBALS['TYPO3WebPath'] . 'index.php?id=33');
