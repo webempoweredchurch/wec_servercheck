@@ -1064,8 +1064,11 @@
 			// get Server API
 			$api = php_sapi_name();
 
+			// known server apis
+			$knownAPIs = array('apache', 'cgi', 'apache2handler', 'cgi-fcgi');
+			
 			// cgi and apache is fine. In fact, everything should be fine, we just need this info for later.
-			if($api == 'cgi' || $api == 'apache' || $api == 'apache2handler') {
+			if(in_array($api, $knownAPIs)) {
 				$this->results->test('checkServerAPI', 'Server API', $api, 1);
 			} else {
 				$this->results->test('checkServerAPI', 'Server API', $api, 0, 'Unknown Server API');
