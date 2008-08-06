@@ -66,6 +66,10 @@
 	// TYPO3 path from a browser.
 	$GLOBALS['TYPO3WebPath'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .
 		$GLOBALS['relativePath'];
+		
+	// Define minimum PHP version.
+	$GLOBALS['min_PHP_major'] = 5;
+	$GLOBALS['min_PHP_minor'] = 2;
 
 	//-----------------------------------
 	//|		Check for TYPO3 Install		|
@@ -1018,7 +1022,7 @@
 			}
 
 			if ( $configError ) {
-				$this->results->overall(-1, 'You have the right PHP version, but there were one or more configuration error(s):');
+				$this->results->overall(-1, 'There were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
 				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 4.3.4', false);
 			} elseif ($wrongVersion) {
@@ -1042,12 +1046,8 @@
 			$minorVersion = $versionArray[1];
 			$miniVersion = $versionArray[2];
 
-			// if it's PHP 4 or 5, we should be good, otherwise display error.
-			if ($majorVersion == 5 && $minorVersion == 2 && $miniVersion == 0) {
-				$recom = 'There are a few severe issues with PHP 5.2.0 that prevent TYPO3 from working correctly.
-					Please either upgrade to a higher version or downgrade to a lower version.';
-				$this->results->test('checkVersion', 'Version', $version, 0, $recom);
-			} else if (($majorVersion == 4 && $minorVersion >= 3) || $majorVersion == 5) {
+			// display error if PHP version is too low
+			if (($majorVersion == $GLOBALS['min_PHP_major'] && $minorVersion >= $GLOBALS['min_PHP_minor']) || $majorVersion >= ($GLOBALS['min_PHP_major'] + 1)) {
 				$this->results->test('checkVersion', 'Version', $version, 1);
 			} else {
 				$this->results->test('checkVersion', 'Version',$version, -1, "PHP Version number is too low!");
