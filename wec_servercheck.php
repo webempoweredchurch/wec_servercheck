@@ -85,7 +85,11 @@
 	($typo3 && $t3conf && $file && $uploads) ? $GLOBALS['t3installed'] = true : $GLOBALS['t3installed'] = false ;
 
 	// define the temp path depending on whether TYPO3 is installed or not.
-	$GLOBALS['t3installed'] ? $GLOBALS['tmp_path'] = 'typo3temp/tmp' : $GLOBALS['tmp_path'] = 'tmp';
+	if($GLOBALS['t3installed'] && isTypo3tempWritable()) {
+		$GLOBALS['tmp_path'] = 'typo3temp/tmp';
+	} else {
+		$GLOBALS['tmp_path'] = 'tmp';	
+	}
 
 	//-----------------------------------
 	//|			Controllers				|
@@ -2468,6 +2472,37 @@
 		$result = strpos(strtolower($GLOBALS['mc']->getTestValue('PHP Scripting Test', 'checkOS')), 'win');
 		if($result === 0) return true;
 		else return false;
+	}
+	
+	/**
+	 * Checks read and write for typo3temp inside TYPO3
+	 *
+	 * @return boolean
+	 **/
+	function isTypo3tempWritable() {
+
+		// create paths
+		$path = $GLOBALS['TYPO3Path'] . 'typo3temp' . '/';
+		$webPath = $GLOBALS['TYPO3WebPath'] . 'typo3temp' . '/';
+
+		// file content
+		$file = '<?php echo "Hello World!"; ?>';
+
+		// open file
+		$link = fopen($path . 'test.php', 'w+');
+
+		$write = fwrite($link, $file);
+
+		fclose($link);
+		
+		unlink($path . 'test.php');
+		
+		// if it couldn't be written, display a warning
+		if($write === false) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	//-----------------------------------
