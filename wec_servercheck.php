@@ -84,6 +84,9 @@
 	// define global variable to hold that information
 	($typo3 && $t3conf && $file && $uploads) ? $GLOBALS['t3installed'] = true : $GLOBALS['t3installed'] = false ;
 
+	// define the temp path depending on whether TYPO3 is installed or not.
+	$GLOBALS['t3installed'] ? $GLOBALS['tmp_path'] = 'typo3temp/tmp' : $GLOBALS['tmp_path'] = 'tmp';
+
 	//-----------------------------------
 	//|			Controllers				|
 	//-----------------------------------
@@ -1698,16 +1701,16 @@
 
 			// check if tmp dir already exists for some crazy reason and delete it
 			// and everything in it.
-			if(file_exists('tmp')) {
-				foreach(glob('tmp/*') as $file) {
+			if(file_exists($GLOBALS['tmp_path'])) {
+				foreach(glob($GLOBALS['tmp_path'].'/*') as $file) {
 					unlink($file);
 				}
-				rmdir('tmp');
+				rmdir($GLOBALS['tmp_path']);
 			}
 
 			// now create a folder with each of the permissions defined above.
 			foreach($perms as $perm) {
-				$out = mkdir('tmp', octdec($perm));
+				$out = mkdir($GLOBALS['tmp_path'], octdec($perm));
 
 				// if that didn't work we have a problem
 				if(!$out) {
@@ -1716,7 +1719,7 @@
 				}
 
 				// if the previous did work, create a temp file and get the return value
-				$test = touch('tmp/test.php');
+				$test = touch($GLOBALS['tmp_path'].'/test.php');
 
 				// if write was successful, save the file permissions in the results. It will
 				// overwrite this until one of them doesn't work, and leave it at the minimum
@@ -1724,8 +1727,8 @@
 				if($test) $this->results->test('checkTempPermissions', 'Minimum write permissions', $perm, 1);
 
 				// remove the temporary file and folder
-				unlink('tmp/test.php');
-				rmdir('tmp');
+				unlink($GLOBALS['tmp_path'].'/test.php');
+				rmdir($GLOBALS['tmp_path']);
 			}
 
 		}
@@ -1744,21 +1747,21 @@
 			}
 
 			// create temp directory
-			$out = mkdir('tmp', octdec('0775'));
+			$out = mkdir($GLOBALS['tmp_path'], octdec('0775'));
 
 			// create a temp file that we can read over http.
-			$fileHandle = fopen('tmp/test.php', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/test.php', 'w+');
 			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
 			fclose($fileHandle);
 
 			// get headers for the file we just created
-			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
+			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path']."/test.php");
 
 			// chmod the file to 777
-			$ret = exec('chmod 777 tmp/test.php');
+			$ret = exec('chmod 777 '.$GLOBALS['tmp_path'].'/test.php');
 
 			// get headers for the chmodded file
-			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
+			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'] . "/test.php");
 
 			// compare both headers and pass test if they are the same
 			if($bHeaders[0] == $aHeaders[0]) {
@@ -1768,8 +1771,8 @@
 			}
 
 			// remove the temporary file and folder
-			unlink('tmp/test.php');
-			rmdir('tmp');
+			unlink($GLOBALS['tmp_path'].'/test.php');
+			rmdir($GLOBALS['tmp_path']);
 
 		}
 
@@ -1782,24 +1785,24 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir('tmp', octdec($perms));
+			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
 
 			// create a temp file that we can read over http.
-			$fileHandle = fopen('tmp/test.php', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/test.php', 'w+');
 			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
 			fclose($fileHandle);
 
 			// now create a symlink to the file to check whether that works
 			$funcExists = function_exists('symlink');
 			if($funcExists) {
-				$sym = symlink('test.php', 'tmp/symtest.php');
+				$sym = symlink('test.php', $GLOBALS['tmp_path'].'/symtest.php');
 			} else {
 				$sym = false;
 			}
 
 			// get headers for the file and symlink we just created
-			$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/symtest.php");
-			$headers = $this->getHeaders($GLOBALS['scriptPath'] . "tmp/test.php");
+			$sHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path']. "/symtest.php");
+			$headers = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path']. "/test.php");
 			$headers500 = strpos($sHeaders[0], '500') !== false;
 			$phpsuexec = $this->results->getStatus('check777');
 
@@ -1828,9 +1831,9 @@
 			}
 
 			// remove the temporary file and folder
-			unlink('tmp/test.php');
-			unlink('tmp/symtest.php');
-			rmdir('tmp');
+			unlink($GLOBALS['tmp_path'].'/test.php');
+			unlink($GLOBALS['tmp_path'].'/symtest.php');
+			rmdir($GLOBALS['tmp_path']);
 		}
 	}
 
@@ -1995,7 +1998,7 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir('test123', octdec($perms));
+			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
 
 			// this goes into the .htaccess file
 			$htaccess = "<IfModule mod_rewrite.c> \n
@@ -2008,20 +2011,20 @@
 			$php = '<?php echo "Hello World!"; ?>';
 
 			// write our htaccess file
-			$fileHandle = fopen('test123/.htaccess', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/.htaccess', 'w+');
 			$bla = fwrite($fileHandle, $htaccess);
 			fclose($fileHandle);
 
 			// write our php file
-			$fileHandle = fopen('test123/rewrite_test.php', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/rewrite_test.php', 'w+');
 			$bla = fwrite($fileHandle, $php);
 			fclose($fileHandle);
 
 			// Now check headers on the real file...
-			$rheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/rewrite_test.php');
+			$rheaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/rewrite_test.php');
 
 			// .. and the virtual file
-			$vheaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/test.php');
+			$vheaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/test.php');
 
 			// if we get a 200 OK and the headers are the same, it worked!
 			if(strpos($rheaders[0], '200 OK') && $rheaders[0] == $vheaders[0]) {
@@ -2033,9 +2036,9 @@
 			}
 
 			// clean up
-			unlink('test123/.htaccess');
-			unlink('test123/rewrite_test.php');
-			rmdir('test123');
+			unlink($GLOBALS['tmp_path'].'/.htaccess');
+			unlink($GLOBALS['tmp_path'].'/rewrite_test.php');
+			rmdir($GLOBALS['tmp_path']);
 		}
 
 		/**
@@ -2047,26 +2050,26 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir('test123', octdec($perms));
+			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
 
 			// write empty index.html file
-			$fileHandle = fopen('test123/index.html', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/index.html', 'w+');
 			$bla = fwrite($fileHandle, '');
 			fclose($fileHandle);
 
 			// Now check headers without .htaccess file
-			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
+			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/index.html');
 
 			// syntax error in .htaccess
 			$htaccess = "SecFEng On";
 
 			// write our htaccess file
-			$fileHandle = fopen('test123/.htaccess', 'w+');
+			$fileHandle = fopen($GLOBALS['tmp_path'].'/.htaccess', 'w+');
 			$bla = fwrite($fileHandle, $htaccess);
 			fclose($fileHandle);
 
 			// check headers with .htaccess file
-			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . 'test123/index.html');
+			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/index.html');
 
 			// if the headers are different, overriding via .htaccess should work
 			if($aHeaders[0] != $bHeaders[0]) {
@@ -2077,9 +2080,9 @@
 			}
 
 			// clean up
-			unlink('test123/.htaccess');
-			unlink('test123/index.html');
-			rmdir('test123');
+			unlink($GLOBALS['tmp_path'].'/.htaccess');
+			unlink($GLOBALS['tmp_path'].'/index.html');
+			rmdir($GLOBALS['tmp_path']);
 		}
 	}
 
