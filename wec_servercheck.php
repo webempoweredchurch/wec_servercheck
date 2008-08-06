@@ -2313,10 +2313,13 @@
 
 			$write = fwrite($link, $file);
 
+			fclose($link);
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the fileadmin directory. Please check the directory permissions.';
 				$this->results->test('checkFileadmin', 'fileadmin', 'not writable', 0, $recom);
+				unlink($path . 'test.php');
 				return null;
 			}
 
@@ -2354,14 +2357,15 @@
 
 			$write = fwrite($link, $file);
 
+			fclose($link);
+			
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the typo3conf directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3conf', 'typo3conf', 'not writable', 0, $recom);
+				unlink($path . 'test.php');
 				return null;
 			}
-
-			fclose($link);
 
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
@@ -2395,14 +2399,15 @@
 
 			$write = fwrite($link, $file);
 
+			fclose($link);
+			
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the typo3temp directory. Please check the directory permissions.';
 				$this->results->test('checkTypo3temp', 'typo3temp', 'not writable', 0, $recom);
+				unlink($path . 'test.php');
 				return null;
 			}
-
-			fclose($link);
 
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
@@ -2435,14 +2440,15 @@
 
 			$write = fwrite($link, $file);
 
+			fclose($link);
+
 			// if it couldn't be written, display a warning
 			if($write === false) {
 				$recom = 'Could not write to the uploads directory. Please check the directory permissions.';
 				$this->results->test('checkUploads', 'uploads', 'not writable', 0, $recom);
+				unlink($path . 'test.php');
 				return null;
 			}
-
-			fclose($link);
 
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
