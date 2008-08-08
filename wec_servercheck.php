@@ -995,6 +995,8 @@
 			$this->checkUploadLimit();
 			$this->checkFunctions();
 			$this->checkTraversal();
+			$this->checkConsistentSettings();
+			$this->checkSafeMode();
 		}
 
 		function evaluate() {
@@ -1003,6 +1005,8 @@
 				&& $this->results->getStatus('checkUploadLimit') == 1
 				&& $this->results->getStatus('checkExecTime') == 1
 				&& $this->results->getStatus('checkTraversal') == 1
+				&& $this->results->getStatus('checkConsistentSettings') == 1
+				&& $this->results->getStatus('checkSafeMode') == 1
 			);
 
 			$almostallgood = ($this->results->getStatus('checkVersion') == 1
@@ -1016,9 +1020,11 @@
 				|| $this->results->getStatus('checkUploadLimit') != 1
 				|| $this->results->getStatus('checkExecTime') != 1
 				|| $this->results->getStatus('checkFunctions') != 1
+				|| $this->results->getStatus('checkSafeMode') != 1
+				|| $this->results->getStatus('checkConsistentSettings') != 1
 				|| $this->results->getStatus('checkTraversal') != 1);
+				
 			$wrongVersion = $this->results->getStatus('checkVersion') == -1;
-			$badVersion = $this->results->getStatus('checkVersion') == 0;
 
 			if ( $allgood ) {
 				$this->results->overall(1, 'PHP is okay!');
@@ -1031,9 +1037,7 @@
 			if ( $configError ) {
 				$this->results->overall(-1, 'There were one or more configuration error(s):');
 			} elseif ($wrongVersion) {
-				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 4.3.4', false);
-			} elseif ($wrongVersion) {
-				$this->results->overall(-1, 'You are running a bad PHP version. See below for details', true);
+				$this->results->overall(-1, 'You don\'t have the right PHP version. TYPO3 requires at least PHP 5.2', false);
 			}
 		}
 
@@ -1124,14 +1128,13 @@
 
 			// get memory limit
 			$mlimit = ini_get('memory_limit');
-
+			
 			// set the good limit, which is 32M
 			$glimit = '32M';
 
-			// convert both to bytes
+			// convert all to bytes
 			$mlimitBytes = $this->returnBytes($mlimit);
 			$glimitBytes = $this->returnBytes($glimit);
-
 
 			// if ours is more than recommended...
 			if($mlimitBytes >= $glimitBytes) {
@@ -1154,6 +1157,44 @@
 				$this->results->test('checkMemoryLimit', 'Memory Limit', $mlimit, -1, $recom);
 			}
 
+		}
+		
+		function checkSafeMode() {
+			$safe_mode = ini_get('safe_mode');
+			if($safe_mode) {
+				$this->results->test('checkSafeMode', 'Safe Mode', 'enabled', 0, 'Safe mode disables the use of required PHP functions. Please disable it.');	
+			} else {
+				$this->results->test('checkSafeMode', 'Safe Mode', 'disabled', 1);
+			}
+		}
+		
+		
+		function checkConsistentSettings() {
+
+			// get memory limit
+			$mlimit = ini_get('memory_limit');
+			
+			// get memory limit in another directory that we created
+			prepTempDir(octdec('0755'));
+			writeTempFile('memlimit.php', '<?php echo ini_get("memory_limit"); ?>');
+			
+			$dir_limit = file_get_contents($GLOBALS['TYPO3WebPath'] . $GLOBALS['tmp_path'].'/memlimit.php', TRUE, NULL, 0, 1024);
+
+			rmTempFile('memlimit.php');
+			rmTempDir();
+			
+			// convert all to bytes
+			$limitBytesRoot = $this->returnBytes($mlimit);
+			$limitBytesDir = $this->returnBytes($dir_limit);
+			
+			if($limitBytesDir == $limitBytesRoot) {
+				$this->results->test('checkConsistentSettings', 'Consistent settings across directories', 'true', 1);
+			} else {
+				$recom = 'PHP settings differ across directories, which can cause problems in the backend if you need to '. 
+					'overwrite memory limits or other settings. The solution is to ask your hosting company to make the '. 
+					'settings global for everyone.';
+				$this->results->test('checkConsistentSettings', 'Consistent settings across directories', 'false', 0,$recom);
+			}
 		}
 
 		/**
@@ -1751,12 +1792,10 @@
 			}
 
 			// create temp directory
-			$out = mkdir($GLOBALS['tmp_path'], octdec('0775'));
+			$out = prepTempDir(octdec('0775'));
 
 			// create a temp file that we can read over http.
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/test.php', 'w+');
-			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
-			fclose($fileHandle);
+			writeTempFile('test.php', '<?php echo "Hello World"; ?>');
 
 			// get headers for the file we just created
 			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path']."/test.php");
@@ -1775,8 +1814,8 @@
 			}
 
 			// remove the temporary file and folder
-			unlink($GLOBALS['tmp_path'].'/test.php');
-			rmdir($GLOBALS['tmp_path']);
+			rmTempFile('test.php');
+			rmTempDir();
 
 		}
 
@@ -1789,17 +1828,15 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
+			$out = prepTempDir(octdec($perms));
 
 			// create a temp file that we can read over http.
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/test.php', 'w+');
-			$bla = fwrite($fileHandle, '<?php echo "Hello World"; ?>');
-			fclose($fileHandle);
+			writeTempFile('test.php', '<?php echo "Hello World"; ?>');
 
 			// now create a symlink to the file to check whether that works
 			$funcExists = function_exists('symlink');
 			if($funcExists) {
-				$sym = symlink('test.php', $GLOBALS['tmp_path'].'/symtest.php');
+				$sym = symlink($GLOBALS['tmp_path'].'/test.php', $GLOBALS['tmp_path'].'/symtest.php');
 			} else {
 				$sym = false;
 			}
@@ -1835,9 +1872,9 @@
 			}
 
 			// remove the temporary file and folder
-			unlink($GLOBALS['tmp_path'].'/test.php');
-			unlink($GLOBALS['tmp_path'].'/symtest.php');
-			rmdir($GLOBALS['tmp_path']);
+			rmTempFile('test.php');
+			rmTempFile('symtest.php');
+			rmTempDir();
 		}
 	}
 
@@ -2002,7 +2039,7 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
+			prepTempDir(octdec($perms));
 
 			// this goes into the .htaccess file
 			$htaccess = "<IfModule mod_rewrite.c> \n
@@ -2015,14 +2052,10 @@
 			$php = '<?php echo "Hello World!"; ?>';
 
 			// write our htaccess file
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/.htaccess', 'w+');
-			$bla = fwrite($fileHandle, $htaccess);
-			fclose($fileHandle);
+			writeTempFile('.htaccess', $htaccess);
 
 			// write our php file
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/rewrite_test.php', 'w+');
-			$bla = fwrite($fileHandle, $php);
-			fclose($fileHandle);
+			writeTempFile('rewrite_test.php', $php);
 
 			// Now check headers on the real file...
 			$rheaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/rewrite_test.php');
@@ -2040,9 +2073,9 @@
 			}
 
 			// clean up
-			unlink($GLOBALS['tmp_path'].'/.htaccess');
-			unlink($GLOBALS['tmp_path'].'/rewrite_test.php');
-			rmdir($GLOBALS['tmp_path']);
+			rmTempFile('.htaccess');
+			rmTempFile('rewrite_test.php');
+			rmTempDir();
 		}
 
 		/**
@@ -2054,12 +2087,10 @@
 
 			$perms = $GLOBALS['mc']->getTestValue('File Permissions Test', 'checkTempPermissions');
 
-			$out = mkdir($GLOBALS['tmp_path'], octdec($perms));
+			prepTempDir(octdec($perms));
 
 			// write empty index.html file
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/index.html', 'w+');
-			$bla = fwrite($fileHandle, '');
-			fclose($fileHandle);
+			writeTempFile('index.html', '');
 
 			// Now check headers without .htaccess file
 			$bHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/index.html');
@@ -2068,9 +2099,7 @@
 			$htaccess = "SecFEng On";
 
 			// write our htaccess file
-			$fileHandle = fopen($GLOBALS['tmp_path'].'/.htaccess', 'w+');
-			$bla = fwrite($fileHandle, $htaccess);
-			fclose($fileHandle);
+			writeTempFile('.htaccess', $htaccess);
 
 			// check headers with .htaccess file
 			$aHeaders = $this->getHeaders($GLOBALS['scriptPath'] . $GLOBALS['tmp_path'].'/index.html');
@@ -2084,9 +2113,9 @@
 			}
 
 			// clean up
-			unlink($GLOBALS['tmp_path'].'/.htaccess');
-			unlink($GLOBALS['tmp_path'].'/index.html');
-			rmdir($GLOBALS['tmp_path']);
+			rmTempFile('.htaccess');
+			rmTempFile('index.html');
+			rmTempDir();
 		}
 	}
 
@@ -2323,8 +2352,6 @@
 				return null;
 			}
 
-			fclose($link);
-
 			// now check headers on the just created file
 			$headers = $this->getHeaders($webPath . 'test.php');
 			if(strpos($headers[0], '200 OK')) {
@@ -2511,6 +2538,48 @@
 		}
 	}
 
+	/**
+	 * Writes a temporary file
+	 *
+	 * @param string $filename 
+	 * @param string $content 
+	 * @return void
+	 */
+	function writeTempFile($filename, $content) {
+
+		// write our htaccess file
+		$fileHandle = fopen($GLOBALS['tmp_path'].'/'.$filename, 'w+');
+		$bla = fwrite($fileHandle, $content);
+		fclose($fileHandle);
+	}
+	
+	/**
+	 * deletes a temporary file
+	 *
+	 * @param string $filename 
+	 */
+	function rmTempFile($filename) {
+		unlink($GLOBALS['tmp_path'].'/'.$filename);
+	}
+	
+	/**
+	 * Creates a tmp dir
+	 *
+	 * @param string $perms 
+	 * @return void
+	 */
+	function prepTempDir($perms) {
+		mkdir($GLOBALS['tmp_path'], $perms);
+	}
+
+	/**
+	 * Removes the temp dir
+	 *
+	 * @return void
+	 */
+	function rmTempDir() {
+		rmdir($GLOBALS['tmp_path']);		
+	}
 	//-----------------------------------
 	//|		Pull everything together	|
 	//-----------------------------------
