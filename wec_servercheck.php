@@ -1190,9 +1190,8 @@
 			if($limitBytesDir == $limitBytesRoot) {
 				$this->results->test('checkConsistentSettings', 'Consistent settings across directories', 'true', 1);
 			} else {
-				$recom = 'PHP settings differ across directories, which can cause problems in the backend if you need to '. 
-					'overwrite memory limits or other settings. The solution is to ask your hosting company to make the '. 
-					'settings global for everyone.';
+				$recom = 'The PHP memory limit is not set consistently throughout TYPO3.  Rather than setting this memory '.
+					'limit locally, please contact your hosting company and request that the limit be raised.';
 				$this->results->test('checkConsistentSettings', 'Consistent settings across directories', 'false', 0,$recom);
 			}
 		}
