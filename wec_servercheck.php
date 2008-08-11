@@ -1423,11 +1423,11 @@
 
 			// got all libs, wow!
 			if($allgood) {
-				$this->results->overall(1, 'You have all required graphics libraries', false);
+				$this->results->overall(1, 'You have all required graphics libraries. Make sure they are set up to be used in the TYPO3 Install Tool.', false);
 
 			// still good
 			} else if($GDandOther){
-				$this->results->overall(1, 'You have all required libraries', false);
+				$this->results->overall(1, 'You have all required libraries. Make sure they are set up to be used in the TYPO3 Install Tool.', false);
 
 			// no GD
 			} else if ($Otheronly) {
