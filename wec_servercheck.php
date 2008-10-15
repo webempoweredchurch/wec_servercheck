@@ -2162,11 +2162,13 @@
 
 			$realurlhtthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 &&
 				$this->results->getStatus('checkHtaccess') == 1 &&
-				$this->results->getStatus('checkRealURL') != 1
+				$this->results->getStatus('checkRealURL') != 1 &&
+				$this->results->getStatus('checkBaseTag') == 1
 			);
 			$realurlhtnotthere = ($GLOBALS['mc']->getTestStatus('Apache Web Server Test','checkRewrite') == 1 &&
 				$this->results->getStatus('checkHtaccess') != 1 &&
-				$this->results->getStatus('checkRealURL') != 1
+				$this->results->getStatus('checkRealURL') != 1 &&
+				$this->results->getStatus('checkBaseTag') == 1
 			);
 			$directories = ($this->results->getStatus('checkFileadmin') == 1 &&
 				$this->results->getStatus('checkUploads') == 1 &&
@@ -2201,6 +2203,9 @@
 			} else if ($realurlhtnotthere) {
 				$recom = "RealURL didn't work because the .htaccess file is missing. Please copy
 				 it from the WEC Starter Package to your TYPO3 root directory.";
+				$this->results->overall(-1, $recom);
+			} else {
+				$recom = "RealURL didn't work. Please look at the details to determine what may be wrong.";
 				$this->results->overall(-1, $recom);
 			}
 
