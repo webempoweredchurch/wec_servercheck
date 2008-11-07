@@ -1944,7 +1944,7 @@
 			} else if($isApache && $this->results->getStatus('checkModRewrite') == 0 && $this->results->getStatus('checkRewrite') == 1) {
 				$this->results->overall(1, 'All works well.', false);
 
-			} else if($isApache && $this->results->getStatus('checkModRewrite') == 1) {
+			} else if($isApache && $this->results->getStatus('checkModRewrite') == 1 && $this->results->getStatus('checkRewrite') == 1) {
 					$this->results->overall(1);
 
 			} else if($noApacheRewrite) {
