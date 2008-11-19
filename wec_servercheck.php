@@ -1129,8 +1129,8 @@
 			// get memory limit
 			$mlimit = ini_get('memory_limit');
 			
-			// set the good limit, which is 32M
-			$glimit = '32M';
+			// set the good limit, which is 64M
+			$glimit = '64M';
 
 			// convert all to bytes
 			$mlimitBytes = $this->returnBytes($mlimit);
@@ -1149,10 +1149,10 @@
 				$recom = 'The memory limit is too low.';
 				if($GLOBALS['mc']->getTestStatus('Apache Web Server Test','override') == 1) {
 					$recom .= 'You can try putting this line in the .htaccess file of your
-						TYPO3 root directory:<br />php_value memory_limit 32M<br />';
+						TYPO3 root directory:<br />php_value memory_limit '.$glimit.'<br />';
 				}
 				$recom .= 'If you have access to the php.ini configuration file, please set the memory_limit
-					to at least 32M or ask your hosting company to do so.';
+					to at least '.$glimit.' or ask your hosting company to do so.';
 
 				$this->results->test('checkMemoryLimit', 'Memory Limit', $mlimit, -1, $recom);
 			}
