@@ -1617,6 +1617,8 @@
 			} else {
 				$this->results->test('checkServer', 'Server Version', $version, -1, "MySQL Version is not compatible!");
 			}
+			
+			mysql_close($con);
 		}
 
 		/**
@@ -1641,7 +1643,7 @@
 			} else {
 				$this->results->test('checkStatus', 'Status', 'Running', -1, mysql_error());
 			}
-
+			mysql_close($con);
 		}
 
 		/**
